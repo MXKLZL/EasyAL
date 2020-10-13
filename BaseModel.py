@@ -75,8 +75,7 @@ class BaseModel():
             epoch_loss = running_loss / len(self.labeled_index)
             epoch_acc = running_corrects.double() / len(self.labeled_index)
 
-            #print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-            #    epoch_loss, epoch_acc))
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
 
     def predict(self, test_data_loader):
         self.dataset.set_mode(1)
