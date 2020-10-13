@@ -10,7 +10,9 @@ Original file is located at
 # from google.colab import drive
 # drive.mount('/content/drive')
 
-#!unzip /content/images.zip
+#!unzip images.zip
+
+#!rm -rf /content/images
 
 import os
 import numpy as np
@@ -61,6 +63,7 @@ class_name_map = {'BEANS': 22,
  'VINEGAR': 11,
  'WATER': 1}
 
+#!nvidia-smi
 
 NUM_INITIAL_LAB = 1000
 TEST_SET_RATIO = 0.2
@@ -68,7 +71,7 @@ NUM_ROUND = 5
 NUM_LABEL_PER_ROUND = 200
 BATCH_SIZE = 32
 FIT_EPOCH = 5
-strategy = 'random'
+strategy = 'entropy'
 
 
 configs = {'transforms': [transforms.Compose([
@@ -134,10 +137,12 @@ for i in range(NUM_ROUND+1):
 
   query_this_round = query(strategy,Model,NUM_LABEL_PER_ROUND)
   label_idx = np.concatenate((label_idx, query_this_round), axis=None)
+  print('')
+  print('')
+  print('For next Round')
+  print("Query new {} unlabel images, Total: {} images".format(NUM_LABEL_PER_ROUND,len(label_idx)))
+  print('')
 
-  print("New {} unlabel images, Total: {} images".format(NUM_LABEL_PER_ROUND,len(label_idx)))
-  print('')
-  print('')
 
 
 
