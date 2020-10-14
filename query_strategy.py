@@ -8,6 +8,7 @@ Original file is located at
 """
 import numpy as np
 import torch
+from sklearn.cluster import KMeans
 
 def query(strategy,model_class,label_per_round):
   
@@ -40,6 +41,20 @@ def query(strategy,model_class,label_per_round):
     selected_index = np.argsort(entropy.numpy())[::-1][:label_per_round]
     return unlabel_index[selected_index]
 
+  if strategy == 'k_means':
+    unlabel_index = model_class.get_unlabeled_index()
+    embedding = np.array(model_class.get_embedding_unlabeled())
+    cluster_ = KMeans(n_clusters=label_per_round)
+    cluster_.fit(embedding)
+    cluster_index = cluster_.predict(embedding)
+    centers = cluster_.cluster_centers_[cluster_index]
+    dis = np.sum(np.array(pow((embedding - centers), 2)), axis=1)
+
+    centerlabels = []
+    for i in range(label_per_round):
+      clusterlabel = np.where(cluster_index == i)[0]
+      centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
+    return unlabel_index[centerlabels]
 
 
 
