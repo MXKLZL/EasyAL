@@ -8,38 +8,52 @@ Original file is located at
 """
 import numpy as np
 import torch
+import time
 from sklearn.cluster import KMeans
 
-def query(strategy,model_class,label_per_round):
-  
+def query(strategy, model_class, label_per_round):
+  start = time.time()
+
   if strategy == 'random':
     unlabel_index = model_class.get_unlabeled_index()
     np.random.shuffle(unlabel_index)
-    return unlabel_index[:label_per_round]
-  
+
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[:label_per_round]
+
   if strategy == 'uncertain':
     unlabel_index = model_class.get_unlabeled_index()
     p, _ = torch.max(model_class.predict_unlabeled(), 1)
     selected_index = p.numpy().argsort()[:label_per_round]
-    return unlabel_index[selected_index]
-  
-  if strategy =='margin':
+
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[selected_index]
+
+  if strategy == 'margin':
     unlabel_index = model_class.get_unlabeled_index()
     p = model_class.predict_unlabeled()
-    p = -np.sort(-p,axis = 1)
-    #sort every row by descending
-    diff = p[:,0] - p[:,1]
-    #get difference between first class and second class
+    p = -np.sort(-p, axis=1)
+    # sort every row by descending
+    diff = p[:, 0] - p[:, 1]
+    # get difference between first class and second class
     selected_index = np.argsort(diff)[:label_per_round]
-    return unlabel_index[selected_index]
-  
+
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[selected_index]
+
   if strategy == 'entropy':
     unlabel_index = model_class.get_unlabeled_index()
     p = model_class.predict_unlabeled()
-    entropy = (-p*torch.log(p)).sum(1)
-    #calculate entropy for each image
+    entropy = (-p * torch.log(p)).sum(1)
+    # calculate entropy for each image
     selected_index = np.argsort(entropy.numpy())[::-1][:label_per_round]
-    return unlabel_index[selected_index]
+
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[selected_index]
 
   if strategy == 'k_means':
     unlabel_index = model_class.get_unlabeled_index()
@@ -54,7 +68,10 @@ def query(strategy,model_class,label_per_round):
     for i in range(label_per_round):
       clusterlabel = np.where(cluster_index == i)[0]
       centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
-    return unlabel_index[centerlabels]
+
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[centerlabels]
 
 
 

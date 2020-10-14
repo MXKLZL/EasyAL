@@ -135,12 +135,13 @@ for i in range(NUM_ROUND+1):
 
   print('Test_Accuracy ',cur_acc)
 
-  query_this_round = query(strategy,Model,NUM_LABEL_PER_ROUND)
+  query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
   label_idx = np.concatenate((label_idx, query_this_round), axis=None)
   print('')
   print('')
   print('For next Round')
-  print("Query new {} unlabel images, Total: {} images".format(NUM_LABEL_PER_ROUND,len(label_idx)))
+  print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
+
   print('')
 
 
