@@ -73,15 +73,21 @@ def query(strategy, model_class, label_per_round):
     duration = end - start
     return duration, unlabel_index[centerlabels]
 
+  if strategy == 'k_center_greedy':
+    unlabel_index = model_class.get_unlabeled_index()
+    unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
+    label_index = model_class.labeled_index
+    label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
 
+    # for each unlabeled dataset i, compute its distance with all labeled j, 
+    # and find the smallest distance
+    min_dists = []
+    for i in range(len(unlabel_embedding)):
+      l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
+      min_dists.append(l2_dists.min())
 
-
-
-
-
-
-
-
-  
-
-
+    selected_index = np.argsort(min_dists)[::-1][:label_per_round]
+    # find the unlabeled dataset i with largest minimal distance 
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[selected_index]
