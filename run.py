@@ -119,6 +119,7 @@ print('')
 print('Begin Train')
 
 accuracy = []
+ssim_list = []
 
 label_idx = get_initial_label(NUM_INITIAL_LAB)
 unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
@@ -141,6 +142,14 @@ for i in range(NUM_ROUND+1):
   print('Test_Accuracy ',cur_acc)
 
   query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
+  images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
+  ssim = av_SSIM(images_queried, pairs=300)
+
+  del images_queried
+  
+  print('SSIM this round ', ssim)
+  ssim_list.append(ssim)
+
   label_idx = np.concatenate((label_idx, query_this_round), axis=None)
   print('')
   print('')
