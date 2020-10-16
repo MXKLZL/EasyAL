@@ -55,7 +55,7 @@ def get_auc(evaluation, strategies):
   auc = []
   for eachs in range(len(strategies)):
     roc = 0
-    if len(evaluation[eachs]) < 3:
+    if len(evaluation[eachs]) < 2:
         auc.append(None)
     for i in range(len(evaluation[eachs]) - 1):
       roc += (evaluation[eachs][i] + evaluation[eachs][i + 1])
