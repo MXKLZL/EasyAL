@@ -1,4 +1,3 @@
-
 from skimage.metrics import structural_similarity as ssim
 from sklearn import metrics
 import numpy as np
@@ -39,14 +38,27 @@ def classification_evaluation(pred, test_target, strategy, search_category):
         return metrics.f1_score(pred, test_target, average=search_category)
 
 def plot_result(evaluation, strategies, index):
+  plt.figure(figsize=(15, 10))
   for i in range(len(evaluation)):
     plt.plot(np.arange(len(evaluation[i])), evaluation[i], marker='o', linestyle='dashed',linewidth=1, markersize=5, label = strategies[i])
 
   x_major_locator = MultipleLocator(1)
   ax = plt.gca()
   ax.xaxis.set_major_locator(x_major_locator)
-  plt.xlabel('epoch', fontsize=14)
+  plt.xlabel('round', fontsize=14)
   plt.ylabel(index, fontsize=14)
   plt.legend()
   plt.title(index + ' under different active learning strategies')
-  plt.show()
+
+
+def get_auc(evaluation, strategies):
+  auc = []
+  for eachs in range(len(strategies)):
+    roc = 0
+    if len(evaluation[eachs]) < 3:
+        auc.append(None)
+    for i in range(len(evaluation[eachs]) - 1):
+      roc += (evaluation[eachs][i] + evaluation[eachs][i + 1])
+    auc.append(roc / (2 * len(evaluation[eachs]) - 1))
+
+  return auc
