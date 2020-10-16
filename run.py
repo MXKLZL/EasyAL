@@ -140,6 +140,7 @@ for i in range(NUM_ROUND+1):
   print('')
   print('')
   print('For next Round')
+  print('Query cost: {}'.format(Model.query_cost(query_this_round)))
   print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
   print('')

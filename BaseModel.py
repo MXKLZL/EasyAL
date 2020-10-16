@@ -23,11 +23,21 @@ class BaseModel():
         self.model = self.__get_model(model_name)
         
         class_counts = dict(Counter(sample_tup[1] for sample_tup in self.data_loader_labeled.dataset))
-        class_counts = dict(sorted(class_counts.items()))
+        self.class_counts = dict(sorted(class_counts.items()))
         self.weights = {}
         for class_name in self.dataset.classes:
           class_id = dataset.class_name_map[class_name]
-          self.weights[class_id] = [1/class_counts[class_id]]
+          self.weights[class_id] = 1/class_counts[class_id]
+
+    def query_cost(self, query_idx):
+        dataset_query = torch.utils.data.Subset(self.dataset, query_idx)
+        class_counts = dict(Counter(sample_tup[1] for sample_tup in dataset_query.dataset))
+        class_counts = dict(sorted(class_counts.items()))
+        res = 0
+        for class_name in self.dataset.classes:
+          class_id = self.dataset.class_name_map[class_name]
+          res += self.weights[class_id] * class_counts[class_id]
+        return res
     
     def get_unlabeled_index(self):
         return np.setdiff1d(np.arange(self.num_train), self.labeled_index)
