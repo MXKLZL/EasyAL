@@ -21,7 +21,13 @@ class BaseModel():
         self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['batch_size'])
         self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['batch_size'])
         self.model = self.__get_model(model_name)
-
+        
+        class_counts = dict(Counter(sample_tup[1] for sample_tup in self.data_loader_labeled.dataset))
+        class_counts = dict(sorted(class_counts.items()))
+        self.weights = {}
+        for class_name in self.dataset.classes:
+          class_id = dataset.class_name_map[class_name]
+          self.weights[class_id] = [1/class_counts[class_id]]
     
     def get_unlabeled_index(self):
         return np.setdiff1d(np.arange(self.num_train), self.labeled_index)
