@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from GroceriesDataset import GroceriesDataset
 from BaseModel import *
 from query_strategy import *
+from Evaluation import *
 
 # path = os.listdir('/content/my_data/images')
 # path.remove('.DS_Store')
@@ -133,7 +134,8 @@ for i in range(NUM_ROUND+1):
   print('Fit Finished')
 
   _, pred = torch.max(Model.predict(testloader), 1)
-  cur_acc = (torch.Tensor(test_target) == pred).sum().item()/test_length
+  cur_acc = classification_evaluation(pred, test_target, 'f1', 'macro')
+  cate_acc = classification_evaluation(pred, test_target, 'f1', None)
   accuracy.append(cur_acc)
 
   print('Test_Accuracy ',cur_acc)

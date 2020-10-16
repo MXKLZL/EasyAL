@@ -1,5 +1,6 @@
 
 from skimage.metrics import structural_similarity as ssim
+from sklearn import metrics
 import numpy as np
 
 def av_SSIM(images, other=None, pairs=1000):
@@ -23,3 +24,14 @@ def av_SSIM(images, other=None, pairs=1000):
             l[i] = ssim(images[ind_a[i]], images[ind_b[i]], data_range=1, multichannel=True)
     
     return l.mean()
+
+
+def classification_evaluation(pred, test_target, strategy, search_category):
+    if strategy == 'precision':
+        return metrics.precision_score(pred, test_target, average=search_category)
+
+    if strategy == 'recall':
+        return metrics.recall_score(pred, test_target, average=search_category)
+
+    if strategy == 'f1':
+        return metrics.f1_score(pred, test_target, average=search_category)
