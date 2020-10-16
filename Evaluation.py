@@ -3,6 +3,7 @@ from skimage.metrics import structural_similarity as ssim
 from sklearn import metrics
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import MultipleLocator
 
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
@@ -41,6 +42,11 @@ def plot_result(evaluation, strategies, index):
   for i in range(len(evaluation)):
     plt.plot(np.arange(len(evaluation[i])), evaluation[i], marker='o', linestyle='dashed',linewidth=1, markersize=5, label = strategies[i])
 
+  x_major_locator = MultipleLocator(1)
+  ax = plt.gca()
+  ax.xaxis.set_major_locator(x_major_locator)
+  plt.xlabel('epoch', fontsize=14)
+  plt.ylabel(index, fontsize=14)
   plt.legend()
   plt.title(index + ' under different active learning strategies')
   plt.show()
