@@ -7,9 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/15Cg7uoa70mKgx1pcmj8XGHAoRjrYhhCo
 """
 
-# from google.colab import drive
-# drive.mount('/content/drive')
-
 #!unzip images.zip
 
 #!rm -rf /content/images
@@ -27,16 +24,6 @@ from GroceriesDataset import GroceriesDataset
 from BaseModel import *
 from query_strategy import *
 from Evaluation import *
-
-# path = os.listdir('/content/my_data/images')
-# path.remove('.DS_Store')
-
-# class_name_map = dict()
-# i = 0
-# for name in path:
-#   class_name_map[name] = i
-#   i +=1
-# class_name_map
 
 class_name_map = {'BEANS': 22,
  'CAKE': 6,
@@ -118,48 +105,60 @@ print('Number of testing images: {}'.format(len(test_ds)))
 print('')
 print('Begin Train')
 
-accuracy = []
-ssim_list = []
+strategies = ['random', 'uncertain', 'entropy', 'k_means', 'k_center_greedy']
+allacc = []
+allssim = []
+allcost = []
 
-label_idx = get_initial_label(NUM_INITIAL_LAB)
-unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
-class_weight = [1]*len(class_name_map) 
+for s in strategies:
+  print(s)
+  accuracy = []
+  ssim_list = []
+  cost_list = []
 
-for i in range(NUM_ROUND+1):
-  print('Round ',i)
-  Model = BaseModel(train_ds,'resnet18',label_idx,configs)
-  Model.fit()
-  if i == 0:
-    class_weight = Model.weights
-    
-  print('Fit Finished')
+  label_idx = get_initial_label(NUM_INITIAL_LAB)
+  unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
+  class_weight = [1]*len(class_name_map)
 
-  _, pred = torch.max(Model.predict(testloader), 1)
-  cur_acc = classification_evaluation(pred, test_target, 'f1', 'macro')
-  cate_acc = classification_evaluation(pred, test_target, 'f1', None)
-  accuracy.append(cur_acc)
+  for i in range(NUM_ROUND+1):
+    print('Round ',i)
+    Model = BaseModel(train_ds,'resnet18',label_idx,configs)
+    Model.fit()
+    if i == 0:
+      class_weight = Model.weights
 
-  print('Test_Accuracy ',cur_acc)
+    print('Fit Finished')
 
-  query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
-  images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
-  ssim = av_SSIM(images_queried, pairs=300)
+    _, pred = torch.max(Model.predict(testloader), 1)
+    cur_acc = classification_evaluation(pred, test_target, 'f1', 'macro')
+    cate_acc = classification_evaluation(pred, test_target, 'f1', None)
+    accuracy.append(cur_acc)
 
-  del images_queried
-  
-  print('SSIM this round ', ssim)
-  ssim_list.append(ssim)
+    print('F1 score: ',cur_acc)
 
-  label_idx = np.concatenate((label_idx, query_this_round), axis=None)
-  print('')
-  print('')
-  print('For next Round')
-  print('query cost: {}'.format(Model.query_cost(query_this_round, class_weight)))
-  print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
+    query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
+    images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
+    ssim = av_SSIM(images_queried, pairs=300)
 
-  print('')
+    del images_queried
 
+    print('SSIM this round ', ssim)
+    ssim_list.append(ssim)
 
+    label_idx = np.concatenate((label_idx, query_this_round), axis=None)
+    cost = Model.query_cost(query_this_round, class_weight)
+    cost_list.append(cost)
+    print('')
+    print('')
+    print('For next Round')
+    print('query cost: {}'.format(cost))
+    print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
+    print('')
+    allacc.append(accuracy)
+    allssim.append(ssim_list)
+    allcost.append(cost_list)
 
-plt.plot(np.arange(len(accuracy)), accuracy, color='green', marker='o', linestyle='dashed',linewidth=2, markersize=12)
+plot_result(allacc, strategies, 'f1 score')
+
+plot_result(allssim, strategies, 'SSIM')
