@@ -2,6 +2,7 @@
 from skimage.metrics import structural_similarity as ssim
 from sklearn import metrics
 import numpy as np
+import matplotlib.pyplot as plt
 
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
@@ -35,3 +36,11 @@ def classification_evaluation(pred, test_target, strategy, search_category):
 
     if strategy == 'f1':
         return metrics.f1_score(pred, test_target, average=search_category)
+
+def plot_result(evaluation, strategies, index):
+  for i in range(len(evaluation)):
+    plt.plot(np.arange(len(evaluation[i])), evaluation[i], marker='o', linestyle='dashed',linewidth=1, markersize=5, label = strategies[i])
+
+  plt.legend()
+  plt.title(index + ' under different active learning strategies')
+  plt.show()
