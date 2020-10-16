@@ -121,12 +121,15 @@ accuracy = []
 
 label_idx = get_initial_label(NUM_INITIAL_LAB)
 unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
+class_weight = [1]*len(class_name_map) 
 
 for i in range(NUM_ROUND+1):
   print('Round ',i)
   Model = BaseModel(train_ds,'resnet18',label_idx,configs)
   Model.fit()
-
+  if i == 0:
+    class_weight = Model.weights
+    
   print('Fit Finished')
 
   _, pred = torch.max(Model.predict(testloader), 1)
@@ -140,7 +143,7 @@ for i in range(NUM_ROUND+1):
   print('')
   print('')
   print('For next Round')
-  print('Query cost: {}'.format(Model.query_cost(query_this_round)))
+  print('query cost: {}'.format(Model.query_cost(query_this_round, class_weight)))
   print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
   print('')

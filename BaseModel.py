@@ -4,6 +4,7 @@ import numpy as np
 from torchvision import datasets, models
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
+from collections import Counter
 
 class BaseModel():
 
@@ -29,14 +30,16 @@ class BaseModel():
           class_id = dataset.class_name_map[class_name]
           self.weights[class_id] = 1/class_counts[class_id]
 
-    def query_cost(self, query_idx):
+    def query_cost(self, query_idx, weights=None):
+        if weights is None:
+          weights = self.weights
         dataset_query = torch.utils.data.Subset(self.dataset, query_idx)
         class_counts = dict(Counter(sample_tup[1] for sample_tup in dataset_query.dataset))
         class_counts = dict(sorted(class_counts.items()))
         res = 0
         for class_name in self.dataset.classes:
           class_id = self.dataset.class_name_map[class_name]
-          res += self.weights[class_id] * class_counts[class_id]
+          res += weights[class_id] * class_counts[class_id]
         return res
     
     def get_unlabeled_index(self):
