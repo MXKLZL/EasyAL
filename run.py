@@ -155,9 +155,9 @@ for s in strategies:
     print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
     print('')
-    allacc.append(accuracy)
-    allssim.append(ssim_list)
-    allcost.append(cost_list)
+  allacc.append(accuracy)
+  allssim.append(ssim_list)
+  allcost.append(cost_list)
 
 plot_result(allacc, strategies, 'f1 score')
 
