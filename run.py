@@ -105,7 +105,7 @@ print('Number of testing images: {}'.format(len(test_ds)))
 print('')
 print('Begin Train')
 
-strategies = ['random', 'uncertain', 'entropy', 'k_means', 'k_center_greedy']
+strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_greedy']
 allacc = []
 allssim = []
 allcost = []
