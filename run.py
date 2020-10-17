@@ -59,7 +59,7 @@ NUM_ROUND = 5
 NUM_LABEL_PER_ROUND = 200
 BATCH_SIZE = 32
 FIT_EPOCH = 5
-strategy = 'entropy'
+#strategy = 'entropy'
 
 
 configs = {'transforms': [transforms.Compose([
@@ -109,14 +109,15 @@ strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_gr
 allacc = []
 allssim = []
 allcost = []
+label_idx1 = get_initial_label(NUM_INITIAL_LAB)
 
-for s in strategies:
-  print(s)
+for strategy in strategies:
+  print(strategy)
   accuracy = []
   ssim_list = []
   cost_list = []
 
-  label_idx = get_initial_label(NUM_INITIAL_LAB)
+  label_idx = label_idx1
   unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
   class_weight = [1]*len(class_name_map)
 
@@ -158,6 +159,9 @@ for s in strategies:
   allacc.append(accuracy)
   allssim.append(ssim_list)
   allcost.append(cost_list)
+
+#calculate f1-score
+print(dict(zip(strategies, get_auc(allacc, strategies))))
 
 plot_result(allacc, strategies, 'f1 score')
 
