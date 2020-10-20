@@ -109,6 +109,7 @@ strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_gr
 allacc = []
 allssim = []
 allcost = []
+allvar = []
 label_idx1 = get_initial_label(NUM_INITIAL_LAB)
 
 for strategy in strategies:
@@ -146,7 +147,15 @@ for strategy in strategies:
     print('SSIM this round ', ssim)
     ssim_list.append(ssim)
 
+    queried_y = np.array([train_ds[idx][1].numpy() for idx in query_this_round])
+    distirbution = np.bincount(queried_y)
+    var_this_round = np.var(distirbution)
+    
+    print('distribution variance this round', var_this_round)
+    allvar.append(var_this_round)
+
     label_idx = np.concatenate((label_idx, query_this_round), axis=None)
+    
     cost = Model.query_cost(query_this_round, class_weight)
     cost_list.append(cost)
     print('')
