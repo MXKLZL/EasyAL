@@ -29,7 +29,10 @@ class BaseModel():
         self.weights = {}
         for class_name in self.dataset.classes:
           class_id = dataset.class_name_map[class_name]
-          self.weights[class_id] = 1/class_counts[class_id]
+          if class_id not in class_counts:
+            self.weights[class_id] = 1
+          else:
+            self.weights[class_id] = 1/class_counts[class_id]
 
     def query_cost(self, query_idx, weights=None):
         if weights is None:

@@ -65,7 +65,7 @@ def average_embed_dis(dataset,batch_idx,model,configs,pairs = 1000):
     embed_dis = []
 
     for i in range(pairs):
-        cur_pair = random.sample(list(batch_idx),2)
+        cur_pair = random.sample(range(0, len(batch_idx)),2)
         embed1 = preds[cur_pair[0]]
         embed2 = preds[cur_pair[1]]
 
