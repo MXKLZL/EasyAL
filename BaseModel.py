@@ -21,6 +21,7 @@ class BaseModel():
 
         self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['batch_size'])
         self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['batch_size'])
+        self.model_name = model_name
         self.model = self.__get_model(model_name)
         
         class_counts = dict(Counter(sample_tup[1] for sample_tup in self.data_loader_labeled.dataset))
@@ -49,15 +50,18 @@ class BaseModel():
     def __get_model(self, model_name):
         if model_name == 'resnet18':
             model = models.resnet18(pretrained=True)
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Linear(num_ftrs, self.num_class)
+            model = model.to(self.device)
+            children = list(model.children())
 
         if model_name == 'mobilenet':
             model = models.mobilenet_v2(pretrained=True)
-
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, self.num_class)
+            num_ftrs = model.classifier[1].in_features
+            model.classifier[1] = nn.Linear(num_ftrs, self.num_class)
+            model = model.to(self.device)
+            children = list(list(model.children)[0].chilren())
         
-        model = model.to(self.device)
-        children = list(model.children())
         for child in children[:len(children) - self.configs['num_ft_layers']]:
             for param in child.parameters():
                 param.require_grad = False
@@ -126,8 +130,14 @@ class BaseModel():
 
     def get_embedding(self, test_data_loader):
         self.dataset.set_mode(1)
-        backup_layer = self.model.fc
-        self.model.fc = nn.Sequential()
+
+        if self.model_name == 'resnet18':
+            backup_layer = self.model.fc
+            self.model.fc = nn.Sequential()
+        if self.model_name == 'mobilenet':
+            backup_layer = self.model.classifier[1]
+            self.model.classifier[1] = nn.Sequential()
+
         embeddings = None
         self.model.eval()
         with torch.no_grad():
@@ -143,7 +153,11 @@ class BaseModel():
                 else:
                     embeddings = output
         
-        self.model.fc = backup_layer
+        if self.model_name == 'resnet18':
+            self.model.fc = backup_layer
+        if self.model_name == 'mobilenet':
+            self.model.classifier[1] = backup_layer
+
         return embeddings
 
     def get_embedding_unlabeled(self):
