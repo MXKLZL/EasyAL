@@ -49,8 +49,12 @@ class BaseModel():
     def __get_model(self, model_name):
         if model_name == 'resnet18':
             model = models.resnet18(pretrained=True)
-            num_ftrs = model.fc.in_features
-            model.fc = nn.Linear(num_ftrs, self.num_class)
+
+        if model_name == 'mobilenet':
+            model = models.mobilenet_v2(pretrained=True)
+
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, self.num_class)
         
         model = model.to(self.device)
         children = list(model.children())
