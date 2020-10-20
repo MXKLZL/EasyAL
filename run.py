@@ -109,8 +109,17 @@ strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_gr
 allacc = []
 allssim = []
 allcost = []
-allvar = []
+# allvar = []
 label_idx1 = get_initial_label(NUM_INITIAL_LAB)
+
+#model for embedding distance
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+diversity_model = models.resnet152(pretrained=True)
+num_ftrs = diversity_model.fc.in_features
+diversity_model.fc = nn.Linear(num_ftrs, len(train_ds.classes))
+backup_layer = diversity_model.fc
+diversity_model.fc = nn.Sequential()
+diversity_model = diversity_model.to(device)
 
 for strategy in strategies:
   print(strategy)
@@ -144,15 +153,19 @@ for strategy in strategies:
 
     del images_queried
 
+    average_embed_dis(train_ds,query_this_round,model,configs,pairs = 1000)
+
+
+
     print('SSIM this round ', ssim)
     ssim_list.append(ssim)
 
-    queried_y = np.array([train_ds[idx][1].numpy() for idx in query_this_round])
-    distirbution = np.bincount(queried_y)
-    var_this_round = np.var(distirbution)
+    # queried_y = np.array([train_ds[idx][1].numpy() for idx in query_this_round])
+    # distirbution = np.bincount(queried_y)
+    # var_this_round = np.var(distirbution)
     
-    print('distribution variance this round', var_this_round)
-    allvar.append(var_this_round)
+    # print('distribution variance this round', var_this_round)
+    # allvar.append(var_this_round)
 
     label_idx = np.concatenate((label_idx, query_this_round), axis=None)
     
