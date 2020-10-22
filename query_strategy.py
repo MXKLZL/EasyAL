@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import time
 from sklearn.cluster import KMeans
+from tqdm.notebook import tqdm
 
 def query(strategy, model_class, label_per_round):
   start = time.time()
