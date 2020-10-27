@@ -9,6 +9,7 @@ Original file is located at
 import numpy as np
 import torch
 import time
+import random
 from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
 import numpy as np
@@ -78,7 +79,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
       if unlabel_loss != None:
         dis_tmp = np.power(dis[clusterlabel],alpha)
-        uncertainty = np.power(unlabel_loss[clusterlabel],alpha)
+        uncertainty = np.power(unlabel_loss[clusterlabel],1 - alpha)
         combine = dis_tmp * uncertainty
         centerlabels.append(clusterlabel[combine.argsort()[0]])
       else:
@@ -88,6 +89,55 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     end = time.time()
     duration = end - start
     return duration, unlabel_index[centerlabels]
+
+  if strategy == 'k_means++':
+    cosdistance = False
+    unlabel_index = model_class.get_unlabeled_index()
+    unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
+    index = np.random.randint(len(unlabel_index))
+    batch = [unlabel_index[index]]
+    label_embedding = unlabel_embedding[[index]]
+    unlabel_embedding = np.delete(unlabel_embedding, index, 0)
+    unlabel_index = np.delete(unlabel_index, index, 0)
+
+    #pick items based on a distribution
+    def random_pick(some_list, probabilities):
+      x = random.uniform(0, 1)
+      cumulative_probability = 0.0
+      for item, item_probability in zip(some_list, probabilities):
+        cumulative_probability += item_probability
+        if x < cumulative_probability:
+          break
+      return item
+
+    for j in tqdm(range(label_per_round - 1)):
+      mindis = []
+      for i in range(len(unlabel_index)):
+        unlabel_loss = None
+
+        if add_uncertainty:
+          unlabel_loss = get_loss(add_uncertainty, model_class)
+
+        if cosdistance:
+          dis = (np.sum((unlabel_embedding[0] * label_embedding), axis=1)) / (np.linalg.norm(unlabel_embedding[0]) * np.linalg.norm(label_embedding, axis=1))
+        else:
+          dis = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
+        mindis.append(min(dis))
+
+      if add_uncertainty:
+        mindis = np.power(unlabel_loss, 1 - alpha) * np.power(mindis, alpha)
+
+      mindis = mindis / sum(mindis)
+
+      picked_index = random_pick(range(0, len(unlabel_index)), mindis)
+      batch.append(unlabel_index[picked_index])
+      label_embedding = np.append(label_embedding, [unlabel_embedding[picked_index]], 0)
+      unlabel_embedding = np.delete(unlabel_embedding, picked_index, 0)
+      unlabel_index = np.delete(unlabel_index, picked_index, 0)
+
+    end = time.time()
+    duration = end - start
+    return duration, np.array(batch)
 
   if strategy == 'k_center_greedy':
     # unlabel_index = model_class.get_unlabeled_index()
