@@ -123,3 +123,36 @@ def query(strategy, model_class, label_per_round):
     end = time.time()
     duration = end - start
     return duration, np.array(batch)
+  
+  if strategy == 'confident_coreset':
+
+    unlabel_index = model_class.get_unlabeled_index()
+    unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
+    label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
+    batch = []
+    for j in tqdm(range(label_per_round)):
+      min_dists = []
+      for i in range(len(unlabel_embedding)):
+        #print(unlabel_embedding[i] - label_embedding)
+        l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
+        #print(l2_dists)
+        min_dists.append(l2_dists.min())
+
+      #get index of data we choose in unlabel idx array
+      label_greedy = np.argsort(min_dists)[::-1][0]
+
+      #update embedding of label and unlabel data
+      label_greedy_embedding = unlabel_embedding[label_greedy]
+      unlabel_embedding = np.delete(unlabel_embedding, label_greedy,0)
+      label_embedding = np.append(label_embedding, [label_greedy_embedding],axis = 0) 
+
+      #update index of label and unlabel data
+      label_greedy_idx = unlabel_index[label_greedy]
+      unlabel_index = np.delete(unlabel_index, label_greedy)
+
+      #update result
+      batch.append(label_greedy_idx)
+
+    end = time.time()
+    duration = end - start
+    return duration, np.array(batch)

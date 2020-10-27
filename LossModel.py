@@ -13,10 +13,10 @@ class LossNet(nn.Module):
           self.gap["gap{0}".format(i)] = nn.AdaptiveAvgPool2d(output_size=(1, 1))
 
         for j in range(len(num_filters)):
-          self.fc["fc{0}".format(i)] = nn.Linear(nnum_filters[i], out_dim)
+          self.fc["fc{0}".format(j)] = nn.Linear(num_filters[j], out_dim)
       
 
-        self.linear = nn.Linear(len(num_filters) * interm_dim, 1)
+        self.linear = nn.Linear(len(num_filters) * out_dim, 1)
     
     def forward(self, inputs):
         out = []
