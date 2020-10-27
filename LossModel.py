@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class LossModel(nn.Module):
     def __init__(self, num_filters=[160,160,160,320], out_dim=128):
-        super(LossNet, self).__init__()
+        super().__init__()
 
         self.gap = {}
         self.fc = {}
