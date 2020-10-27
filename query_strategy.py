@@ -75,7 +75,15 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     centerlabels = []
     for i in range(label_per_round):
       clusterlabel = np.where(cluster_index == i)[0]
-      centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
+
+      if unlabel_loss != None:
+        dis_tmp = np.power(dis[clusterlabel],alpha)
+        uncertainty = np.power(unlabel_loss[clusterlabel],alpha)
+        combine = dis_tmp * uncertainty
+        centerlabels.append(clusterlabel[combine.argsort()[0]])
+      else:
+        centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
+
 
     end = time.time()
     duration = end - start
@@ -130,6 +138,8 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     end = time.time()
     duration = end - start
     return duration, np.array(batch)
+
+    
   
   if strategy == 'confident_coreset':
 
