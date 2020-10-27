@@ -11,8 +11,9 @@ import torch
 import time
 from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
+import numpy as np
 
-def query(strategy, model_class, label_per_round):
+def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False):
   start = time.time()
 
   if strategy == 'random':
@@ -57,6 +58,12 @@ def query(strategy, model_class, label_per_round):
     return duration, unlabel_index[selected_index]
 
   if strategy == 'k_means':
+
+    unlabel_loss = None
+    if add_uncertainty != False:
+      unlabel_loss = get_loss(add_uncertainty,model_class)
+    
+
     unlabel_index = model_class.get_unlabeled_index()
     embedding = np.array(model_class.get_embedding_unlabeled())
     cluster_ = KMeans(n_clusters=label_per_round)
@@ -128,9 +135,16 @@ def query(strategy, model_class, label_per_round):
 
     unlabel_index = model_class.get_unlabeled_index()
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
-    unlabel_loss = np.array(model_class.get_uncertainty().view(1,-1))
     label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
     batch = []
+    
+
+    if add_uncertainty == False:
+      unlabel_loss = get_loss('loss',model_class)
+    else:
+      unlabel_loss = get_loss(add_uncertainty,model_class)
+
+
     for j in tqdm(range(label_per_round)):
       min_dists = []
       for i in range(len(unlabel_embedding)):
@@ -139,9 +153,10 @@ def query(strategy, model_class, label_per_round):
         #print(l2_dists)
         min_dists.append(l2_dists.min())
 
-
+      distance = np.power(np.array(min_dists),alpha)
+      uncertainty = np.power(unlabel_loss,1-alpha)
       #get index of data we choose in unlabel idx array
-      label_greedy = np.argsort(min_dists*unlabel_loss.squeeze())[::-1][0]
+      label_greedy = np.argsort(distance*uncertainty)[::-1][0]
 
       #update embedding of label and unlabel data
       label_greedy_embedding = unlabel_embedding[label_greedy]
@@ -159,3 +174,30 @@ def query(strategy, model_class, label_per_round):
     end = time.time()
     duration = end - start
     return duration, np.array(batch)
+
+def get_loss(strategy,model_class):
+  p = None
+  if strategy == 'uncertain':
+    p, _ = torch.max(model_class.predict_unlabeled(), 1)
+
+  elif strategy =='margin':
+    p = model_class.predict_unlabeled()
+    p = -np.sort(-p, axis=1)
+    p = p[:, 0] - p[:, 1]
+  elif strategy =='entropy':
+    p = model_class.predict_unlabeled()
+    p = (-p * torch.log(p)).sum(1)
+  elif strategy == 'loss':
+    p = model_class.predict_unlabeled_loss().view(1,-1).squeeze()
+
+
+  if p != None:
+    return np.array(p)
+  else:
+    print('Please Enter a Valid Loss Strategy')
+    return p
+    
+
+  
+
+
