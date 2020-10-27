@@ -27,4 +27,4 @@ class LossNet(nn.Module):
           out.append(tmp)
 
         output = self.linear(torch.cat(out, 1))
-        return out
+        return output
