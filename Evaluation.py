@@ -29,13 +29,13 @@ def av_SSIM(images, other=None, pairs=1000):
 
 def classification_evaluation(pred, test_target, strategy, search_category):
     if strategy == 'precision':
-        return metrics.precision_score(pred, test_target, average=search_category)
+        return metrics.precision_score(test_target, pred, average=search_category)
 
     if strategy == 'recall':
-        return metrics.recall_score(pred, test_target, average=search_category)
+        return metrics.recall_score(test_target, pred, average=search_category)
 
     if strategy == 'f1':
-        return metrics.f1_score(pred, test_target, average=search_category)
+        return metrics.f1_score(test_target, pred, average=search_category)
 
 def plot_result(evaluation, strategies, index):
   plt.figure(figsize=(15, 10))
@@ -62,3 +62,4 @@ def get_auc(evaluation, strategies):
     auc.append(roc / (2 * len(evaluation[eachs]) - 1))
 
   return auc
+
