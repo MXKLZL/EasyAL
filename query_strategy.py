@@ -91,7 +91,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     return duration, unlabel_index[centerlabels]
 
   if strategy == 'k_means++':
-    cosdistance = False
+
     unlabel_index = model_class.get_unlabeled_index()
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
     index = np.random.randint(len(unlabel_index))
@@ -118,11 +118,9 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
         if add_uncertainty:
           unlabel_loss = get_loss(add_uncertainty, model_class)
 
-        if cosdistance:
-          dis = (np.sum((unlabel_embedding[0] * label_embedding), axis=1)) / (np.linalg.norm(unlabel_embedding[0]) * np.linalg.norm(label_embedding, axis=1))
-        else:
-          dis = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        mindis.append(min(dis))
+        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance')  # or cosine_distance
+
+        mindis.append(min(dists))
 
       if add_uncertainty:
         mindis = np.power(unlabel_loss, 1 - alpha) * np.power(mindis, alpha)
@@ -166,9 +164,10 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       min_dists = []
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
-        l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        #print(l2_dists)
-        min_dists.append(l2_dists.min())
+        #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
+        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance')  # or cosine_distance
+
+        min_dists.append(dists.min())
 
       #get index of data we choose in unlabel idx array
       label_greedy = np.argsort(min_dists)[::-1][0]
@@ -209,9 +208,9 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       min_dists = []
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
-        l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        #print(l2_dists)
-        min_dists.append(l2_dists.min())
+        #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
+        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance') # or cosine_distance
+        min_dists.append(dists.min())
 
       distance = np.power(np.array(min_dists),alpha)
       uncertainty = np.power(unlabel_loss,1-alpha)
@@ -257,6 +256,13 @@ def get_loss(strategy,model_class):
     print('Please Enter a Valid Loss Strategy')
     return p
     
+def get_distance(unlabel, label_embedding, strategy):
+
+  if strategy == 'cosine_distance':
+    return (np.sum((unlabel * label_embedding), axis=1)) / (np.linalg.norm(unlabel) * np.linalg.norm(label_embedding, axis=1))
+
+  elif strategy == 'euclidean_distance':
+    return np.linalg.norm(unlabel - label_embedding, axis=1)
 
   
 
