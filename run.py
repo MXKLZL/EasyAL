@@ -161,7 +161,7 @@ for strategy in strategies:
 
     del images_queried
 
-    embed_dis.append(average_embed_dis(train_ds,query_this_round,diversity_model,configs,pairs = 1000))
+    embed_dis.append(average_embed_dis(train_ds,query_this_round,configs,model = diversity_model,pairs = 1000))
 
 
     print('SSIM this round ', ssim)
