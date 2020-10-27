@@ -106,23 +106,18 @@ print('')
 print('Begin Train')
 
 strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_greedy']
-#strategies = ['random','k_center_greedy']
 allacc = []
 allssim = []
 allcost = []
 allvar = []
 alltime = []
 allembed = []
-label_idx1 = get_initial_label(NUM_INITIAL_LAB)
+label_idx_original = get_initial_label(NUM_INITIAL_LAB)
+
 
 #model for embedding distance
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 diversity_model = models.resnet152(pretrained=True)
-num_ftrs = diversity_model.fc.in_features
-diversity_model.fc = nn.Linear(num_ftrs, len(train_ds.classes))
-backup_layer = diversity_model.fc
-diversity_model.fc = nn.Sequential()
-diversity_model = diversity_model.to(device)
+
 
 for strategy in strategies:
   print(strategy)
@@ -133,7 +128,7 @@ for strategy in strategies:
   cur_time = []
   embed_dis = []
 
-  label_idx = label_idx1
+  label_idx = label_idx_original
   unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
   class_weight = [1]*len(class_name_map)
 

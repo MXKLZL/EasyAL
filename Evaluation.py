@@ -4,8 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from scipy.spatial import distance
+from BaseModel import BaseModel
 from torchvision import datasets, models
 import torch.nn.functional as F
+import torch.nn as nn
 import random
 import torch
 
@@ -31,7 +33,7 @@ def av_SSIM(images, other=None, pairs=1000):
     
     return l.mean()
 
-def average_embed_dis(dataset,batch_idx,model,configs,pairs = 1000):
+def average_embed_dis(dataset,batch_idx,configs,model = None,pairs = 1000):
     #prepare dataset
     dataset.set_mode(1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -43,24 +45,37 @@ def average_embed_dis(dataset,batch_idx,model,configs,pairs = 1000):
     # backup_layer = model.fc
     # model.fc = nn.Sequential()
     
-
+    
     preds = None
-    model.eval()
-    with torch.no_grad():
-        for inputs, labels in data_loader_query:
-            
-            inputs = inputs.to(device)
-            labels = labels.to(device)
 
-            output = model(inputs)
-            output = F.softmax(output, dim=1)
-            output = output.cpu()
-            if preds is not None:
-                preds = torch.cat((preds, output))
-            else:
-                preds = output
+    if isinstance(model, BaseModel):
+        preds = model.get_embedding(data_loader_query)
 
-    # model.fc = backup_layer
+    else:
+        #prepare model
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, len(dataset.classes))
+        backup_layer = model.fc
+        model.fc = nn.Sequential()
+        model = model.to(device)
+
+
+        model.eval()
+        with torch.no_grad():
+            for inputs, labels in data_loader_query:
+                
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                output = model(inputs)
+                output = F.softmax(output, dim=1)
+                output = output.cpu()
+                if preds is not None:
+                    preds = torch.cat((preds, output))
+                else:
+                    preds = output
+
+        model.fc = backup_layer
     
     embed_dis = []
 

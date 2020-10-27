@@ -128,6 +128,7 @@ def query(strategy, model_class, label_per_round):
 
     unlabel_index = model_class.get_unlabeled_index()
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
+    unlabel_loss = np.array(model_class.get_uncertainty().view(1,-1))
     label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
     batch = []
     for j in tqdm(range(label_per_round)):
@@ -138,12 +139,14 @@ def query(strategy, model_class, label_per_round):
         #print(l2_dists)
         min_dists.append(l2_dists.min())
 
+
       #get index of data we choose in unlabel idx array
-      label_greedy = np.argsort(min_dists)[::-1][0]
+      label_greedy = np.argsort(min_dists*unlabel_loss.squeeze())[::-1][0]
 
       #update embedding of label and unlabel data
       label_greedy_embedding = unlabel_embedding[label_greedy]
       unlabel_embedding = np.delete(unlabel_embedding, label_greedy,0)
+      unlabel_loss = np.delete(unlabel_loss, label_greedy,1)
       label_embedding = np.append(label_embedding, [label_greedy_embedding],axis = 0) 
 
       #update index of label and unlabel data
