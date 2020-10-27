@@ -10,10 +10,10 @@ class LossModel(nn.Module):
         self.gap = {}
         self.fc = {}
         for i in range(len(num_filters)):
-          self.gap["gap{0}".format(i)] = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+          self.gap[f"gap{i}"] = nn.AdaptiveAvgPool2d(output_size=(1, 1))
 
         for j in range(len(num_filters)):
-          self.fc["fc{0}".format(j)] = nn.Linear(num_filters[j], out_dim)
+          self.fc[f"fc{j}"] = nn.Linear(num_filters[j], out_dim)
       
 
         self.linear = nn.Linear(len(num_filters) * out_dim, 1)
@@ -21,9 +21,9 @@ class LossModel(nn.Module):
     def forward(self, inputs):
         out = []
         for i in range(len(inputs)):
-          tmp = self.gap["gap{0}".format(i)](inputs[i])
+          tmp = self.gap[f"gap{i}"](inputs[i])
           tmp = tmp.view(tmp.shape[0],-1)
-          tmp = F.relu(self.fc["fc{0}".format(i)](tmp))
+          tmp = F.relu(self.fc[f"fc{i}"](tmp))
           out.append(tmp)
 
         output = self.linear(torch.cat(out, 1))
