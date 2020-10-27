@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F 
 
 
-class LossNet(nn.Module):
+class LossModel(nn.Module):
     def __init__(self, num_filters=[160,160,160,320], out_dim=128):
         super(LossNet, self).__init__()
 
