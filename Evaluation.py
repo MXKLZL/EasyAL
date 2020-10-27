@@ -3,6 +3,11 @@ from sklearn import metrics
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
+from scipy.spatial import distance
+from torchvision import datasets, models
+import torch.nn.functional as F
+import random
+import torch
 
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
@@ -25,6 +30,49 @@ def av_SSIM(images, other=None, pairs=1000):
             l[i] = ssim(images[ind_a[i]], images[ind_b[i]], data_range=1, multichannel=True)
     
     return l.mean()
+
+def average_embed_dis(dataset,batch_idx,model,configs,pairs = 1000):
+    #prepare dataset
+    dataset.set_mode(1)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
+
+    dataset_query = torch.utils.data.Subset(dataset, batch_idx)
+    data_loader_query = torch.utils.data.DataLoader(dataset_query, batch_size = configs['batch_size'])
+
+    # backup_layer = model.fc
+    # model.fc = nn.Sequential()
+    
+
+    preds = None
+    model.eval()
+    with torch.no_grad():
+        for inputs, labels in data_loader_query:
+            
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            output = model(inputs)
+            output = F.softmax(output, dim=1)
+            output = output.cpu()
+            if preds is not None:
+                preds = torch.cat((preds, output))
+            else:
+                preds = output
+
+    # model.fc = backup_layer
+    
+    embed_dis = []
+
+    for i in range(pairs):
+        cur_pair = random.sample(range(0, len(batch_idx)),2)
+        embed1 = preds[cur_pair[0]]
+        embed2 = preds[cur_pair[1]]
+
+        embed_dis.append(distance.euclidean(embed1.numpy(), embed2.numpy()))
+    
+    return sum(embed_dis)/len(embed_dis)
+
 
 
 def classification_evaluation(pred, test_target, strategy, search_category):

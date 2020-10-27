@@ -53,18 +53,18 @@ class_name_map = {'BEANS': 22,
 
 #!nvidia-smi
 
-NUM_INITIAL_LAB = 1000
+NUM_INITIAL_LAB = 200
 TEST_SET_RATIO = 0.2
-NUM_ROUND = 5
-NUM_LABEL_PER_ROUND = 200
+NUM_ROUND = 15
+NUM_LABEL_PER_ROUND = 100
 BATCH_SIZE = 32
-FIT_EPOCH = 5
+FIT_EPOCH = 10
 #strategy = 'entropy'
 
 
 configs = {'transforms': [transforms.Compose([
                                             transforms.Resize(224),
-                                            transforms.RandomHorizontalFlip(),
+                                            transforms.RandomAffine(30, scale = (0.8,1.5)),
                                             transforms.ToTensor(),
                                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
                                 transforms.Compose([
@@ -73,7 +73,7 @@ configs = {'transforms': [transforms.Compose([
                                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])],
           'batch_size': BATCH_SIZE,
           'epoch': FIT_EPOCH,
-          'num_ft_layers': 5,
+          'num_ft_layers': 3,
           'loss_function': nn.CrossEntropyLoss(),
           'num_class': 25,
            }
@@ -106,17 +106,32 @@ print('')
 print('Begin Train')
 
 strategies = ['random', 'uncertain', 'entropy','margin', 'k_means', 'k_center_greedy']
+#strategies = ['random','k_center_greedy']
 allacc = []
 allssim = []
 allcost = []
 allvar = []
+alltime = []
+allembed = []
 label_idx1 = get_initial_label(NUM_INITIAL_LAB)
+
+#model for embedding distance
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+diversity_model = models.resnet152(pretrained=True)
+num_ftrs = diversity_model.fc.in_features
+diversity_model.fc = nn.Linear(num_ftrs, len(train_ds.classes))
+backup_layer = diversity_model.fc
+diversity_model.fc = nn.Sequential()
+diversity_model = diversity_model.to(device)
 
 for strategy in strategies:
   print(strategy)
   accuracy = []
   ssim_list = []
   cost_list = []
+  var_list = []
+  cur_time = []
+  embed_dis = []
 
   label_idx = label_idx1
   unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
@@ -124,7 +139,7 @@ for strategy in strategies:
 
   for i in range(NUM_ROUND+1):
     print('Round ',i)
-    Model = BaseModel(train_ds,'resnet18',label_idx,configs)
+    Model = BaseModel(train_ds,'mobilenet',label_idx,configs)
     Model.fit()
     if i == 0:
       class_weight = Model.weights
@@ -132,7 +147,7 @@ for strategy in strategies:
     print('Fit Finished')
 
     _, pred = torch.max(Model.predict(testloader), 1)
-    cur_acc = classification_evaluation(pred, test_target, 'f1', 'macro')
+    cur_acc = classification_evaluation(pred, test_target, 'f1', 'weighted')
     cate_acc = classification_evaluation(pred, test_target, 'f1', None)
     accuracy.append(cur_acc)
 
@@ -142,17 +157,22 @@ for strategy in strategies:
     images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
     ssim = av_SSIM(images_queried, pairs=300)
 
+    cur_time.append(query_time)
+
     del images_queried
+
+    embed_dis.append(average_embed_dis(train_ds,query_this_round,diversity_model,configs,pairs = 1000))
+
 
     print('SSIM this round ', ssim)
     ssim_list.append(ssim)
 
-    queried_y = np.array([train_ds[idx][1].numpy() for idx in query_this_round])
+    queried_y = np.array([train_ds[idx][1] for idx in query_this_round])
     distirbution = np.bincount(queried_y)
     var_this_round = np.var(distirbution)
     
     print('distribution variance this round', var_this_round)
-    allvar.append(var_this_round)
+    var_list.append(var_this_round)
 
     label_idx = np.concatenate((label_idx, query_this_round), axis=None)
     
@@ -168,7 +188,9 @@ for strategy in strategies:
   allacc.append(accuracy)
   allssim.append(ssim_list)
   allcost.append(cost_list)
-
+  allvar.append(var_list)
+  alltime.append(cur_time)
+  allembed.append(embed_dis)
 #calculate f1-score
 print(dict(zip(strategies, get_auc(allacc, strategies))))
 

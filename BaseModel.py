@@ -29,7 +29,10 @@ class BaseModel():
         self.weights = {}
         for class_name in self.dataset.classes:
           class_id = dataset.class_name_map[class_name]
-          self.weights[class_id] = 1/class_counts[class_id]
+          if class_id not in class_counts:
+            self.weights[class_id] = 1
+          else:
+            self.weights[class_id] = 1/class_counts[class_id]
 
     def query_cost(self, query_idx, weights=None):
         if weights is None:
@@ -60,7 +63,7 @@ class BaseModel():
             num_ftrs = model.classifier[1].in_features
             model.classifier[1] = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
-            children = list(list(model.children)[0].chilren())
+            children = list(list(model.children())[0].children())
         
         for child in children[:len(children) - self.configs['num_ft_layers']]:
             for param in child.parameters():
