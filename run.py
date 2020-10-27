@@ -141,6 +141,7 @@ for strategy in strategies:
 
     print('Fit Finished')
 
+    #get accuracy
     _, pred = torch.max(Model.predict(testloader), 1)
     cur_acc = classification_evaluation(pred, test_target, 'f1', 'weighted')
     cate_acc = classification_evaluation(pred, test_target, 'f1', None)
@@ -148,7 +149,11 @@ for strategy in strategies:
 
     print('F1 score: ',cur_acc)
 
+
+    #query new data
     query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
+
+    #calculate query metric
     images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
     ssim = av_SSIM(images_queried, pairs=300)
 
@@ -162,6 +167,7 @@ for strategy in strategies:
     print('SSIM this round ', ssim)
     ssim_list.append(ssim)
 
+    #get class distribution
     queried_y = np.array([train_ds[idx][1] for idx in query_this_round])
     distirbution = np.bincount(queried_y)
     var_this_round = np.var(distirbution)
@@ -175,8 +181,8 @@ for strategy in strategies:
     cost_list.append(cost)
     print('')
     print('')
+    print('Query cost: {}'.format(cost))
     print('For next Round')
-    print('query cost: {}'.format(cost))
     print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
     print('')
