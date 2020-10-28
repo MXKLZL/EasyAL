@@ -80,14 +80,19 @@ class BaseModel():
             loss_weights = []
             for class_name in self.dataset.classes:
                 class_id = self.dataset.class_name_map[class_name]
-                loss_weights.append(self.class_counts[class_id])
-            loss_weights=torch.FloatTensor(loss_weights)
+                if class_id in self.class_counts:
+                    loss_weights.append(self.class_counts[class_id])
+                else:
+                    loss_weights.append(0)
+
+            loss_weights=sum(loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
+
             if torch.cuda.is_available():
                 loss_weights = loss_weights.cuda()
             criterion = self.configs['loss_function'](weight=loss_weights)
         else:
             criterion = self.configs['loss_function']()
-            
+
         num_epochs = self.configs['epoch']
 
         self.model.train()
