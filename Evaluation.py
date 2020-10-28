@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import random
 import torch
+import itertools
 
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
@@ -172,9 +173,6 @@ def plot_confusion_matrix(cm,
     http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import itertools
 
     accuracy = np.trace(cm) / float(np.sum(cm))
     misclass = 1 - accuracy
