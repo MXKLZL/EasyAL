@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import random
 import torch
+import itertools
 
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
@@ -33,7 +34,7 @@ def av_SSIM(images, other=None, pairs=1000):
     
     return l.mean()
 
-def average_embed_dis(dataset,batch_idx,configs,model = None,pairs = 1000):
+def average_embed_dis(dataset, distance_matrix, batch_idx,configs,model = None,pairs = 1000):
     #prepare dataset
     dataset.set_mode(1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -84,8 +85,11 @@ def average_embed_dis(dataset,batch_idx,configs,model = None,pairs = 1000):
         embed1 = preds[cur_pair[0]]
         embed2 = preds[cur_pair[1]]
 
-        embed_dis.append(distance.euclidean(embed1.numpy(), embed2.numpy()))
-    
+        if distance_matrix == 'euclidean_distance':
+            embed_dis.append(distance.euclidean(embed1.numpy(), embed2.numpy()))
+        elif distance_matrix == 'cosine_distance':
+            embed_dis.append(distance.cosine(embed1.numpy(), embed2.numpy()))
+
     return sum(embed_dis)/len(embed_dis)
 
 
@@ -169,9 +173,6 @@ def plot_confusion_matrix(cm,
     http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import itertools
 
     accuracy = np.trace(cm) / float(np.sum(cm))
     misclass = 1 - accuracy
