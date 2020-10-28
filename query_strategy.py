@@ -250,6 +250,7 @@ def get_loss(strategy,model_class):
     p = (-p * torch.log(p)).sum(1)
   elif strategy == 'loss':
     p = model_class.predict_unlabeled_loss().view(1,-1).squeeze()
+    p = (p + p.max()- 2*p.min())/(p.max()-p.min())
 
 
   if p != None:
