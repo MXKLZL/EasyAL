@@ -4,9 +4,10 @@ import torch.nn.functional as F
 
 
 class LossModel(nn.Module):
-    def __init__(self, num_filters=[160,160,160,320], out_dim=128):
+    def __init__(self,device,num_filters=[160,160,160,320], out_dim=128):
         super().__init__()
 
+        self.device = device
         self.gap = {}
         self.fc = {}
         for i in range(len(num_filters)):
@@ -14,10 +15,18 @@ class LossModel(nn.Module):
 
         for j in range(len(num_filters)):
           self.fc[f"fc{j}"] = nn.Linear(num_filters[j], out_dim)
-      
+
+        for key, value in self.gap.items():
+          self.gap[key] = self.gap[key].to(self.device)
+        
+        for key, value in self.fc.items():
+          self.fc[key] = self.fc[key].to(self.device)
 
         self.linear = nn.Linear(len(num_filters) * out_dim, 1)
-    
+        
+
+
+
     def forward(self, inputs):
         out = []
         for i in range(len(inputs)):
