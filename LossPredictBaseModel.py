@@ -128,7 +128,7 @@ class LossPredictBaseModel(BaseModel):
     def predict_unlabeled_loss(self):
         return self.predict_loss(self.data_loader_unlabeled)
 
-def pair_comparison_loss(pred_loss, target_loss, margin=1.0):
+def pair_comparison_loss(pred_loss, target_loss, device,margin=1.0):
     
 
     shuffle = torch.randperm(len(pred_loss))
@@ -138,10 +138,10 @@ def pair_comparison_loss(pred_loss, target_loss, margin=1.0):
     target_loss = (target_loss - target_loss[shuffle])[::len(target_loss)//2]
 
     #torch.max(target_loss,torch.tensor([0.])) change all negatvie number in target_loss to 0
-    indicator = (2 * torch.sign(torch.max(target_loss,torch.tensor([0.]))) - 1)*-1
+    indicator = (2 * torch.sign(torch.max(target_loss,torch.tensor([0.],device = device))) - 1)*-1
 
     #get loss for each pair
-    loss_total = torch.max((indicator * pred_loss) + margin,torch.tensor([0.]))
+    loss_total = torch.max((indicator * pred_loss) + margin,torch.tensor([0.],device = device))
 
     loss_total = torch.sum(loss_total)
     loss_total = loss_total / pred_loss.size(0)
