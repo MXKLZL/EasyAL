@@ -62,7 +62,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
     unlabel_loss = None
     if add_uncertainty != False:
-      unlabel_loss = get_loss(add_uncertainty,model_class)
+      unlabel_loss = get_uncertainty(add_uncertainty,model_class)
     
 
     unlabel_index = model_class.get_unlabeled_index()
@@ -116,7 +116,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
         unlabel_loss = None
 
         if add_uncertainty:
-          unlabel_loss = get_loss(add_uncertainty, model_class)
+          unlabel_loss = get_uncertainty(add_uncertainty, model_class)
 
         dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance')  # or cosine_distance
 
@@ -199,9 +199,9 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     
 
     if add_uncertainty == False:
-      unlabel_loss = get_loss('loss',model_class)
+      unlabel_loss = get_uncertainty('loss',model_class)
     else:
-      unlabel_loss = get_loss(add_uncertainty,model_class)
+      unlabel_loss = get_uncertainty(add_uncertainty,model_class)
 
 
     for j in tqdm(range(label_per_round)):
@@ -234,7 +234,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     duration = end - start
     return duration, np.array(batch)
 
-def get_loss(strategy,model_class):
+def get_uncertainty(strategy,model_class):
   p = None
   if strategy == 'uncertain':
     p, _ = torch.max(model_class.predict_unlabeled(), 1)
