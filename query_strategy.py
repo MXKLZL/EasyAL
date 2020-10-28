@@ -78,7 +78,11 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       clusterlabel = np.where(cluster_index == i)[0]
 
       if unlabel_loss is not None:
-        dis_tmp = np.power(dis[clusterlabel],alpha)
+
+        dis_tmp = dis[clusterlabel]
+        dis_tmp = (dis_tmp - dis_tmp.min())/(dis_tmp.max()-dis_tmp.min())
+
+        dis_tmp = np.power(dis_tmp,alpha)
         uncertainty = np.power(unlabel_loss[clusterlabel],1 - alpha)
         combine = dis_tmp/uncertainty
         centerlabels.append(clusterlabel[combine.argsort()[0]])
@@ -212,7 +216,10 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
         dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance') # or cosine_distance
         min_dists.append(dists.min())
 
-      distance = np.power(np.array(min_dists),alpha)
+      min_dists = np.array(min_dists)
+      scaled_dists = (min_dists - min_dists.min())/(min_dists.max()-min_dists.min())
+
+      distance = np.power(scaled_dists,alpha)
       uncertainty = np.power(unlabel_loss,1-alpha)
       #get index of data we choose in unlabel idx array
       label_greedy = np.argsort(distance*uncertainty)[::-1][0]
@@ -248,9 +255,10 @@ def get_uncertainty(strategy,model_class):
   elif strategy =='entropy':
     p = model_class.predict_unlabeled()
     p = (-p * torch.log(p)).sum(1)
+    p = (p - p.min())/(p.max()-p.min())
   elif strategy == 'loss':
     p = model_class.predict_unlabeled_loss().view(1,-1).squeeze()
-    p = (p + p.max()- 2*p.min())/(p.max()-p.min())
+    p = (p - p.min())/(p.max()-p.min())
 
 
   if p != None:
