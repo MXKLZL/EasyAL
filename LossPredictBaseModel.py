@@ -16,7 +16,7 @@ class LossPredictBaseModel(BaseModel):
         self.loss_feat_layers = [14,15,16,17]
 
     def __get_loss_model(self):
-        loss_model = LossModel()
+        loss_model = LossModel(self.device)
         loss_model = loss_model.to(self.device)
         return loss_model
         
@@ -42,7 +42,7 @@ class LossPredictBaseModel(BaseModel):
             running_corrects = 0
             running_lm_loss = 0.0
 
-            for inputs, labels in self.data_loader_labeled():
+            for inputs, labels in self.data_loader_labeled:
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
@@ -128,22 +128,18 @@ class LossPredictBaseModel(BaseModel):
     def predict_unlabeled_loss(self):
         return self.predict_loss(self.data_loader_unlabeled)
 
-def pair_comparison_loss(pred_loss, target_loss, device,margin=1.0):
+def pair_comparison_loss(preds_loss, target_loss, margin=1.0):
     
+    shuffle = torch.randperm(len(preds_loss))
+    preds_loss = preds_loss[shuffle]
+    target_loss = target_loss[shuffle]
 
-    shuffle = torch.randperm(len(pred_loss))
     target_loss = target_loss.detach()
-
-    pred_loss = (pred_loss - pred_loss[shuffle])[::len(pred_loss)//2]
-    target_loss = (target_loss - target_loss[shuffle])[::len(target_loss)//2]
-
-    #torch.max(target_loss,torch.tensor([0.])) change all negatvie number in target_loss to 0
-    indicator = (2 * torch.sign(torch.max(target_loss,torch.tensor([0.],device = device))) - 1)*-1
-
-    #get loss for each pair
-    loss_total = torch.max((indicator * pred_loss) + margin,torch.tensor([0.],device = device))
-
-    loss_total = torch.sum(loss_total)
-    loss_total = loss_total / pred_loss.size(0)
+    preds_loss = (preds_loss - preds_loss.flip(0))[:len(preds_loss)//2] 
+    target_loss = (target_loss - target_loss.flip(0))[:len(target_loss)//2]
     
+    indicator = (2 * torch.sign(torch.clamp(target_loss, min=0)) - 1)*-1
+    
+    loss_total = torch.sum(torch.clamp(indicator * preds_loss + margin, min=0))
+    loss_total = loss_total / preds_loss.size(0)
     return loss_total
