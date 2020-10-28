@@ -74,8 +74,9 @@ configs = {'transforms': [transforms.Compose([
           'batch_size': BATCH_SIZE,
           'epoch': FIT_EPOCH,
           'num_ft_layers': 3,
-          'loss_function': nn.CrossEntropyLoss(),
+          'loss_function': nn.CrossEntropyLoss,
           'num_class': 25,
+          'weighted_loss': True
            }
 
 train_path = '/content/train_split_all.txt'
