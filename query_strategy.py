@@ -77,10 +77,10 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     for i in range(label_per_round):
       clusterlabel = np.where(cluster_index == i)[0]
 
-      if unlabel_loss != None:
+      if unlabel_loss is not None:
         dis_tmp = np.power(dis[clusterlabel],alpha)
         uncertainty = np.power(unlabel_loss[clusterlabel],1 - alpha)
-        combine = dis_tmp * uncertainty
+        combine = dis_tmp/uncertainty
         centerlabels.append(clusterlabel[combine.argsort()[0]])
       else:
         centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
