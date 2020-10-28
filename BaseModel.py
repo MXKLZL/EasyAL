@@ -75,7 +75,19 @@ class BaseModel():
         self.dataset.set_mode(0)
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
-        criterion = self.configs['loss_function']
+        
+        if self.configs['weighted_loss']:
+            loss_weights = []
+            for class_name in self.dataset.classes:
+                class_id = self.dataset.class_name_map[class_name]
+                loss_weights.append(self.class_counts[class_id])
+            loss_weights=torch.FloatTensor(loss_weights)
+            if torch.cuda.is_available():
+                loss_weights = loss_weights.cuda()
+            criterion = self.configs['loss_function'](weight=loss_weights)
+        else:
+            criterion = self.configs['loss_function']()
+            
         num_epochs = self.configs['epoch']
 
         self.model.train()
