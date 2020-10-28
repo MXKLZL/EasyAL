@@ -238,11 +238,13 @@ def get_loss(strategy,model_class):
   p = None
   if strategy == 'uncertain':
     p, _ = torch.max(model_class.predict_unlabeled(), 1)
+    p = 1-p
 
   elif strategy =='margin':
     p = model_class.predict_unlabeled()
     p = -np.sort(-p, axis=1)
     p = p[:, 0] - p[:, 1]
+    p = 1-p
   elif strategy =='entropy':
     p = model_class.predict_unlabeled()
     p = (-p * torch.log(p)).sum(1)
