@@ -102,7 +102,7 @@ class BaseModel():
                 if class_id in self.class_counts:
                     loss_weights.append(self.class_counts[class_id])
                 else:
-                    loss_weights.append(0)
+                    loss_weights.append(1e-4)
 
             loss_weights=sum(loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
 
