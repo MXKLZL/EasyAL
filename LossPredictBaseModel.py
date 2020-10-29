@@ -31,7 +31,24 @@ class LossPredictBaseModel(BaseModel):
         optimizer_cf = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
         optimizer_lm = torch.optim.Adam(filter(lambda p: p.requires_grad, self.loss_model.parameters()), lr=0.0001)
 
-        criterion = nn.CrossEntropyLoss(reduction='none')
+        if self.configs['weighted_loss']:
+            loss_weights = []
+            for class_name in self.dataset.classes:
+                class_id = self.dataset.class_name_map[class_name]
+                if class_id in self.class_counts:
+                    loss_weights.append(self.class_counts[class_id])
+                else:
+                    loss_weights.append(0)
+
+            loss_weights=sum(loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
+
+            if torch.cuda.is_available():
+                loss_weights = loss_weights.cuda()
+            criterion = self.configs['loss_function'](weight=loss_weights, reduction='none')
+        else:
+            criterion = self.configs['loss_function'](reduction='none')
+
+
         num_epochs = self.configs['epoch']
         epoch_loss = self.configs['epoch_loss']
 
