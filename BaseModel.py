@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import numpy as np
@@ -8,17 +9,21 @@ from collections import Counter
 
 class BaseModel():
 
-    def __init__(self, dataset, model_name, labeled_index, configs):
+    def __init__(self, dataset, model_name, labeled_index, configs, semi = False, teacher_target = None):
         self.configs = configs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.num_class = len(dataset.classes)
         self.labeled_index = labeled_index
         self.num_train = len(dataset)
         self.dataset = dataset
+        self.semi = semi
+        self.teacher_target = teacher_target
+
         unlabeled_index = self.get_unlabeled_index()
         dataset_labeled = torch.utils.data.Subset(dataset, labeled_index)
         dataset_unlabeled = torch.utils.data.Subset(dataset, unlabeled_index)
 
+        self.dataset_unlabeled = dataset_unlabeled
         self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['batch_size'])
         self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['batch_size'])
         self.model_name = model_name
@@ -53,6 +58,20 @@ class BaseModel():
     def __get_model(self, model_name):
         if model_name == 'resnet18':
             model = models.resnet18(pretrained=True)
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Linear(num_ftrs, self.num_class)
+            model = model.to(self.device)
+            children = list(model.children())
+
+        if model_name == 'resnet34':
+            model = models.resnet18(pretrained=True)
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Linear(num_ftrs, self.num_class)
+            model = model.to(self.device)
+            children = list(model.children())
+
+        if model_name == 'resnet50':
+            model = models.resnet50(pretrained=True)
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
@@ -104,21 +123,60 @@ class BaseModel():
             running_loss = 0.0
             running_corrects = 0
 
-            for inputs, labels in self.data_loader_labeled:
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
+            if not self.semi:
+                for inputs, labels in self.data_loader_labeled:
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
-                optimizer.zero_grad()
+                    optimizer.zero_grad()
 
-                outputs = self.model(inputs)
-                _, preds = torch.max(outputs, 1)
-                loss = criterion(outputs, labels)
+                    outputs = self.model(inputs)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
 
-                loss.backward()
-                optimizer.step()
+                    loss.backward()
+                    optimizer.step()
 
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                    running_loss += loss.item() * inputs.size(0)
+                    running_corrects += torch.sum(preds == labels.data)
+
+            else:
+                targets = iter(self.teacher_target)
+
+                data_loader_unlabeled = self.get_new_unlabeled_loader()
+
+                for inputs, labels in self.data_loader_labeled:
+                    try:
+                        input_u, label_u = next(data_loader_unlabeled)
+                    except StopIteration:
+                        data_loader_unlabeled = self.get_new_unlabeled_loader()
+                        input_u, label_u = next(data_loader_unlabeled)
+                        targets = iter(self.teacher_target)
+
+                    input_u = input_u.to(self.device)
+                    predict_label = torch.from_numpy(np.array([next(targets) for i in range(label_u.shape[0])]))
+                    predict_label = predict_label.to(self.device)
+
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
+
+                    optimizer.zero_grad()
+
+                    outputs1 = self.model(inputs)
+                    _, preds1 = torch.max(outputs1, 1)
+                    loss1 = criterion(outputs1, labels)
+
+                    outputs2 = self.model(input_u)
+                    _, preds2 = torch.max(outputs2, 1)
+                    loss2 = criterion(outputs2, predict_label)
+
+                    loss = loss1 + loss2
+
+                    loss.backward()
+                    optimizer.step()
+
+                    running_loss += loss.item() * inputs.size(0)
+                    running_corrects += torch.sum(preds1 == labels.data)
 
             epoch_loss = running_loss / len(self.labeled_index)
             epoch_acc = running_corrects.double() / len(self.labeled_index)
@@ -151,7 +209,7 @@ class BaseModel():
     def get_embedding(self, test_data_loader):
         self.dataset.set_mode(1)
 
-        if self.model_name == 'resnet18':
+        if self.model_name in ['resnet18', 'resnet34', 'resnet50']:
             backup_layer = self.model.fc
             self.model.fc = nn.Sequential()
         if self.model_name == 'mobilenet':
@@ -173,7 +231,7 @@ class BaseModel():
                 else:
                     embeddings = output
         
-        if self.model_name == 'resnet18':
+        if self.model_name in ['resnet18', 'resnet34', 'resnet50']:
             self.model.fc = backup_layer
         if self.model_name == 'mobilenet':
             self.model.classifier[1] = backup_layer
@@ -183,4 +241,11 @@ class BaseModel():
     def get_embedding_unlabeled(self):
         return self.get_embedding(self.data_loader_unlabeled)
 
-    
+    def get_new_unlabeled_loader(self):
+
+        unlabel_count = len(self.teacher_target)
+        label_count = len(self.labeled_index)
+        rounds = math.ceil(label_count / self.configs['batch_size'])
+        unlabel_batchsize = int(unlabel_count / rounds)
+
+        return iter(torch.utils.data.DataLoader(self.dataset_unlabeled, batch_size=unlabel_batchsize))
