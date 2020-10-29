@@ -65,9 +65,9 @@ class LossPredictBaseModel(BaseModel):
                 loss_preds = loss_preds.view(loss_preds.size(0))
 
                 cf_loss = criterion(outputs, labels)
-                lm_loss = pair_comparison_loss(loss_preds, cf_loss, margin = configs['margin'])
+                lm_loss = pair_comparison_loss(loss_preds, cf_loss, margin = self.configs['margin'])
 
-                loss =  torch.sum(cf_loss)/cf_loss.size(0) + configs['lambda']*lm_loss
+                loss =  torch.sum(cf_loss)/cf_loss.size(0) + self.configs['lambda']*lm_loss
 
                 loss.backward()
                 optimizer_cf.step()
