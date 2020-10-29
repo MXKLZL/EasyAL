@@ -227,7 +227,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       #update embedding of label and unlabel data
       label_greedy_embedding = unlabel_embedding[label_greedy]
       unlabel_embedding = np.delete(unlabel_embedding, label_greedy,0)
-      unlabel_loss = np.delete(unlabel_loss, label_greedy,1)
+      unlabel_loss = np.delete(unlabel_loss, label_greedy)
       label_embedding = np.append(label_embedding, [label_greedy_embedding],axis = 0) 
 
       #update index of label and unlabel data
