@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from collections import Counter
 from LossModel import LossModel
+from BaseModel import BaseModel
 
 
 class LossPredictBaseModel(BaseModel):
