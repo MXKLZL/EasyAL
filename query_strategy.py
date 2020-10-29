@@ -126,6 +126,10 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
         mindis.append(min(dists))
 
+      # minmaxscale
+      mindis = np.array(mindis)
+      mindis = (mindis - mindis.min()) / (mindis.max() - mindis.min())
+
       if add_uncertainty:
         mindis = np.power(unlabel_loss, 1 - alpha) * np.power(mindis, alpha)
 
