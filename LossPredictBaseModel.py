@@ -44,9 +44,9 @@ class LossPredictBaseModel(BaseModel):
 
             if torch.cuda.is_available():
                 loss_weights = loss_weights.cuda()
-            criterion = self.configs['loss_function'](weight=loss_weights, reduction=None)
+            criterion = self.configs['loss_function'](weight=loss_weights, reduction='none')
         else:
-            criterion = self.configs['loss_function'](reduction=None)
+            criterion = self.configs['loss_function'](reduction='none')
 
 
         num_epochs = self.configs['epoch']
