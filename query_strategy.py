@@ -14,7 +14,7 @@ from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
 import numpy as np
 
-def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance='euclidean'):
+def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance_name='euclidean'):
   start = time.time()
 
   if strategy == 'random':
@@ -122,7 +122,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
         if add_uncertainty:
           unlabel_loss = get_uncertainty(add_uncertainty, model_class)
 
-        dists = get_distance(unlabel_embedding[i], label_embedding, distance)  # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance_name)  # or cosine_distance
 
         mindis.append(min(dists))
 
@@ -173,7 +173,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
         #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        dists = get_distance(unlabel_embedding[i], label_embedding, distance)  # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance_name)  # or cosine_distance
 
         min_dists.append(dists.min())
 
@@ -217,7 +217,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
         #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        dists = get_distance(unlabel_embedding[i], label_embedding, distance) # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance_name) # or cosine_distance
         min_dists.append(dists.min())
 
       min_dists = np.array(min_dists)
