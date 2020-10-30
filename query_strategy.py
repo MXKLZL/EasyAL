@@ -14,7 +14,7 @@ from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
 import numpy as np
 
-def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False):
+def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance='euclidean'):
   start = time.time()
 
   if strategy == 'random':
@@ -122,7 +122,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
         if add_uncertainty:
           unlabel_loss = get_uncertainty(add_uncertainty, model_class)
 
-        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance')  # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance)  # or cosine_distance
 
         mindis.append(min(dists))
 
@@ -173,7 +173,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
         #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance')  # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance)  # or cosine_distance
 
         min_dists.append(dists.min())
 
@@ -217,7 +217,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       for i in range(len(unlabel_embedding)):
         #print(unlabel_embedding[i] - label_embedding)
         #l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        dists = get_distance(unlabel_embedding[i], label_embedding, 'euclidean_distance') # or cosine_distance
+        dists = get_distance(unlabel_embedding[i], label_embedding, distance) # or cosine_distance
         min_dists.append(dists.min())
 
       min_dists = np.array(min_dists)
@@ -273,10 +273,10 @@ def get_uncertainty(strategy,model_class):
     
 def get_distance(unlabel, label_embedding, strategy):
 
-  if strategy == 'cosine_distance':
+  if strategy == 'cosine':
     return (np.sum((unlabel * label_embedding), axis=1)) / (np.linalg.norm(unlabel) * np.linalg.norm(label_embedding, axis=1))
 
-  elif strategy == 'euclidean_distance':
+  elif strategy == 'euclidean':
     return np.linalg.norm(unlabel - label_embedding, axis=1)
 
   
