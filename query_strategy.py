@@ -69,7 +69,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     unlabel_index = model_class.get_unlabeled_index()
     embedding = np.array(model_class.get_embedding_unlabeled())
 
-    if standardize == True:
+    if standardize:
       scaler = StandardScaler()
       scaler.fit(embedding)
       embedding = scaler.transform(embedding)
@@ -92,7 +92,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
         dis_tmp = np.power(dis_tmp,alpha)
         uncertainty = np.power(unlabel_loss[clusterlabel],1 - alpha)
-        combine = dis_tmp/(uncertainty+1e-4)
+        combine = dis_tmp/(uncertainty+1e-6)
         centerlabels.append(clusterlabel[combine.argsort()[0]])
       else:
         centerlabels.append(clusterlabel[dis[clusterlabel].argsort()[0]])
