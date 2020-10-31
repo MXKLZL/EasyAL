@@ -288,7 +288,7 @@ def get_uncertainty(strategy,model_class):
     p = (p - p.min())/(p.max()-p.min())
 
 
-  if p != None:
+  if p is not None:
     return np.array(p)
   else:
     print('Please Enter a Valid Loss Strategy')
