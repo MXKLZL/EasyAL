@@ -281,7 +281,7 @@ def get_uncertainty(strategy,model_class):
     p = 1-p
   elif strategy =='entropy':
     p = model_class.predict_unlabeled()
-    p = (-p * torch.log(p)).sum(1)
+    p = (-p * torch.log(p+1e-6)).sum(1)
     p = (p - p.min())/(p.max()-p.min())
   elif strategy == 'loss':
     p = model_class.predict_unlabeled_loss().view(1,-1).squeeze()
