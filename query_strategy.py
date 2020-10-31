@@ -13,8 +13,9 @@ import random
 from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
-def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance_name='euclidean'):
+def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance_name='euclidean',standardize = True):
   start = time.time()
 
   if strategy == 'random':
@@ -67,6 +68,13 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
     unlabel_index = model_class.get_unlabeled_index()
     embedding = np.array(model_class.get_embedding_unlabeled())
+
+    if standardize == True:
+      scaler = StandardScaler()
+      scaler.fit(embedding)
+      embedding = scaler.transform(data)
+
+
     cluster_ = KMeans(n_clusters=label_per_round)
     cluster_.fit(embedding)
     cluster_index = cluster_.predict(embedding)
@@ -168,6 +176,14 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
     label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
     batch = []
+
+
+    if standardize == True:
+      scaler = StandardScaler()
+      scaler.fit(np.vstack((unlabel_embedding,label_embedding)))
+      unlabel_embedding = scaler.transform(unlabel_embedding)
+      label_embedding = scaler.transform(label_embedding)
+
     for j in tqdm(range(label_per_round)):
       min_dists = []
       for i in range(len(unlabel_embedding)):
@@ -204,7 +220,14 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
     label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
     batch = []
-    
+
+
+    if standardize == True:
+      scaler = StandardScaler()
+      scaler.fit(np.vstack((unlabel_embedding,label_embedding)))
+      unlabel_embedding = scaler.transform(unlabel_embedding)
+      label_embedding = scaler.transform(label_embedding)
+
 
     if add_uncertainty == False:
       unlabel_loss = get_uncertainty('loss',model_class)
@@ -278,7 +301,6 @@ def get_distance(unlabel, label_embedding, strategy):
 
   elif strategy == 'euclidean':
     return np.linalg.norm(unlabel - label_embedding, axis=1)
-
   
 
 
