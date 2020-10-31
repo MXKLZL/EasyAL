@@ -72,7 +72,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     if standardize == True:
       scaler = StandardScaler()
       scaler.fit(embedding)
-      embedding = scaler.transform(data)
+      embedding = scaler.transform(embedding)
 
 
     cluster_ = KMeans(n_clusters=label_per_round)
