@@ -88,7 +88,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
       if unlabel_loss is not None:
 
         dis_tmp = dis[clusterlabel]
-        dis_tmp = (dis_tmp - dis_tmp.min())/(dis_tmp.max()-dis_tmp.min())
+        dis_tmp = (dis_tmp - dis_tmp.min())/(dis_tmp.max()-dis_tmp.min()+1e-4)
 
         dis_tmp = np.power(dis_tmp,alpha)
         uncertainty = np.power(unlabel_loss[clusterlabel],1 - alpha)
