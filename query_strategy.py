@@ -115,6 +115,12 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
 
     unlabel_index = model_class.get_unlabeled_index()
     unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
+
+    if standardize:
+      scaler = StandardScaler()
+      scaler.fit(unlabel_embedding)
+      unlabel_embedding = scaler.transform(unlabel_embedding)
+
     index = np.random.randint(len(unlabel_index))
     batch = [unlabel_index[index]]
     label_embedding = unlabel_embedding[[index]]
