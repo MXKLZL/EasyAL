@@ -193,7 +193,7 @@ def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = F
     batch = []
 
 
-    if standardize == True:
+    if standardize:
       scaler = StandardScaler()
       scaler.fit(np.vstack((unlabel_embedding,label_embedding)))
       unlabel_embedding = scaler.transform(unlabel_embedding)
