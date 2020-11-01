@@ -18,6 +18,15 @@ from sklearn.preprocessing import StandardScaler
 def query(strategy, model_class, label_per_round,alpha = 0.5,add_uncertainty = False, distance_name='euclidean',standardize = True):
   start = time.time()
 
+
+  if strategy == 'loss':
+    unlabel_index = model_class.get_unlabeled_index()
+    unlabel_loss = get_uncertainty('loss',model_class)
+    selected_index = unlabel_loss.argsort()[::-1][:label_per_round]
+    end = time.time()
+    duration = end - start
+    return duration, unlabel_index[selected_index]
+
   if strategy == 'random':
     unlabel_index = model_class.get_unlabeled_index()
     np.random.shuffle(unlabel_index)
