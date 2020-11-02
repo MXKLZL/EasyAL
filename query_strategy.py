@@ -312,7 +312,7 @@ def get_uncertainty(strategy,model_class):
 def get_distance(unlabel, label_embedding, strategy):
 
   if strategy == 'cosine':
-    return (np.sum((unlabel * label_embedding), axis=1)) / (np.linalg.norm(unlabel) * np.linalg.norm(label_embedding, axis=1))
+    return -1*((np.sum((unlabel * label_embedding), axis=1)) / (np.linalg.norm(unlabel) * np.linalg.norm(label_embedding, axis=1)))
 
   elif strategy == 'euclidean':
     return np.linalg.norm(unlabel - label_embedding, axis=1)
