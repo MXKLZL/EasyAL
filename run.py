@@ -213,8 +213,7 @@ for strategy in strategies:
   logger = logging.getLogger()
   old_level = logger.level
   logger.setLevel(100)
-  with warnings.catch_warnings():
-    vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
+  vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
   logger.setLevel(old_level)
 #calculate f1-score
 print(dict(zip(strategies, get_auc(allacc, strategies))))

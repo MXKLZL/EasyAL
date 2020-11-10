@@ -18,6 +18,7 @@ def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10):
     
     for k, v in class_name_map.items():
         f, axarr = plt.subplots(num_rounds, random_sample, figsize=(10, 4)) 
+        plt.rcParams.update({'figure.max_open_warning': 0})
         for round_idx in range(num_rounds):
             samples = random.sample(query_round_by_class[v][round_idx], min(random_sample, len(query_round_by_class[v][round_idx]))) 
             for sample_idx, sample in enumerate(samples):
