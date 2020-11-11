@@ -14,10 +14,10 @@ class TEModel(BaseModel):
     def fit(self):
         self.dataset.set_mode(0)
         batch_size = self.configs['batch_size']
-        alpha = configs['alpha']
-        ramp_length = configs['ramp_length']
+        alpha = self.configs['alpha']
+        ramp_length = self.configs['ramp_length']
 
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.002, betas=(0.9, 0.99))
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
 
         Z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
         z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
@@ -48,9 +48,12 @@ class TEModel(BaseModel):
             num_labeled = len(self.labeled_index)
 
             running_loss = 0.0
-            running_corrects = 0
+            running_sl = 0.0
+            running_ul = 0.0
+            running_corrects_lb = 0
+            running_corrects_ulb = 0
 
-            weight = weight_scheduler(epoch, ramp_length, 30 , num_labeled, self.num_train)
+            weight = weight_scheduler(epoch, ramp_length, 3000 , num_labeled, self.num_train)
 
             for i, (inputs, labels) in self.data_loader:
                 labels = labels.to(self.device)
@@ -61,7 +64,8 @@ class TEModel(BaseModel):
                 _, preds = torch.max(outputs_batch, 1)
 
                 z_batch = z[i*batch_size: (i+1)*batch_size].detach()
-                loss = total_loss(outputs_batch, z_batch,labels,labeled_mask,weight,loss_weights)
+                labeled_mask_batch = labeled_mask[i*batch_size: (i+1)*batch_size]
+                loss, ul, sl = total_loss(outputs_batch, z_batch,labels,labeled_mask_batch,weight,loss_weights)
 
                 outputs[i * batch_size: (i + 1) * batch_size] = outputs_batch.detach().clone()
 
@@ -69,15 +73,22 @@ class TEModel(BaseModel):
                 optimizer.step()
 
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                running_sl += sl.item() * inputs.size(0)
+                running_ul += ul.item() * inputs.size(0)
+                running_corrects_lb += torch.sum(preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
+                running_corrects_ulb += torch.sum(preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
             
             Z = alpha * Z + (1. - alpha) * outputs
             z = Z * (1. / (1. - alpha ** (epoch + 1)))
 
-            epoch_loss = running_loss / len(self.labeled_index)
-            epoch_acc = running_corrects.double() / len(self.labeled_index)
+            epoch_loss = running_loss / self.num_train
+            epoch_acc_lb = running_corrects_lb.double() / len(self.labeled_index)
+            epoch_acc_ulb = running_corrects_ulb.double() / (self.num_train - len(self.labeled_index))
+            epoch_sl = running_sl / self.num_train
+            epoch_ul = running_ul / self.num_train
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
+
+            print(f'Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
 
 
 
@@ -103,7 +114,7 @@ def total_loss(output, ensemble,labels,indicator,unlabel_weight,class_weight):
   ul = unsup_loss(output,ensemble,unlabel_weight)
   sl = sup_loss(output,labels,indicator,weights = class_weight)
 
-  return ul+sl
+  return ul+sl, ul, sl
 
 
 def rampup(epoch,ramp_length):
@@ -112,7 +123,7 @@ def rampup(epoch,ramp_length):
   elif epoch < ramp_length:
     p = float(epoch) / float(ramp_length)
     p = 1.0 - p
-    return math.exp(-p*p*5.0)
+    return np.exp(-p*p*5.0)
   else:
       return 1.0
 
