@@ -118,7 +118,7 @@ class MEBaseModel(BaseModel):
 
                 _, preds = torch.max(class_logit, 1)
 
-                loss, ul, sl, rl = total_loss()
+                loss, ul, sl, rl = total_loss(class_logit, cons_logit, ema_logit, labels, labeled_mask_batch, weight,loss_weights, logit_distance_cost)
                 loss.backward()
                 optimizer.step()
                 global_step += 1
@@ -144,6 +144,7 @@ def update_ema_variables(model, ema_model, alpha, global_step):
     alpha = min(1 - 1 / (global_step + 1), alpha)
     for ema_param, param in zip(ema_model.parameters(), model.parameters()):
         ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
+
 
 def unsup_loss(output,ensemble,unlabel_weight):
   loss = nn.MSELoss(reduction = 'sum')
@@ -193,16 +194,6 @@ def symmetric_mse_loss(input1, input2):
     return torch.sum((input1 - input2)**2) / num_classes
 
 
-
-
-def create_model(model_name,ema=False):
-
-
-        if ema:
-            for param in model.parameters():
-                param.detach_()
-
-        return model
 
 
 
