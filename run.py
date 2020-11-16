@@ -20,7 +20,7 @@ from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 from sklearn.model_selection import train_test_split
 from torchvision import datasets, models
 import matplotlib.pyplot as plt
-from GroceriesDataset import GroceriesDataset
+from GroceriesDataset import GroceriesDataset,TransformTwice
 from BaseModel import *
 from query_strategy import *
 from Evaluation import *
@@ -81,7 +81,12 @@ configs = {'transforms': [transforms.Compose([
                                 transforms.Compose([
                                             transforms.Resize(224),
                                             transforms.ToTensor(),
-                                            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])],
+                                            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
+                                TransformTwice(transforms.Compose([
+                                            transforms.Resize(224),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]))
+                                            ],
           'batch_size': BATCH_SIZE,
           'epoch': FIT_EPOCH,
           'num_ft_layers': 3,

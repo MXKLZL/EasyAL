@@ -3,6 +3,17 @@ import torch
 from torch.utils.data import Dataset
 import os
 
+
+
+class TransformTwice:
+    def __init__(self, transform):
+        self.transform = transform
+
+    def __call__(self, inp):
+        out1 = self.transform(inp)
+        out2 = self.transform(inp)
+        return out1, out2
+
 class GroceriesDataset(Dataset):
 
     def __init__(self, image_path_file, root_dir, class_name_map, transform=None):

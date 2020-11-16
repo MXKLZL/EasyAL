@@ -93,21 +93,16 @@ class TEModel(BaseModel):
 
 
 
-def unsup_loss(output,ensemble,unlabel_weight):
+def unsup_loss(output,pseudo_label,unlabel_weight):
   loss = nn.MSELoss(reduction = 'sum')
-  return unlabel_weight*(loss(F.softmax(output, dim=1),F.softmax(ensemble, dim=1))/output.numel())
+  num_classes = output.size()[1]
+  return unlabel_weight*loss(F.softmax(output, dim=1),F.softmax(pseudo_label, dim=1))/num_classes
 
 
-def sup_loss(output,labels,indicator,weights = None):
-  label_output = output[indicator]
-  ground_truth = labels[indicator]
-
-  if len(label_output) > 0:
-    loss = nn.CrossEntropyLoss(weight = weights)
-    label_loss = loss(label_output,ground_truth)
-
+def sup_loss(output,labels,weights = None):
+    loss = nn.CrossEntropyLoss(weight = weights,reduction = 'sum')
+    label_loss = loss(output,labels)
     return label_loss
-  return torch.tensor(0.0,requires_grad=False)
 
 
 
@@ -132,6 +127,12 @@ def weight_scheduler(epoch, ramp_length, weight_max,num_labeled, num_samples):
   weight_max = weight_max * (float(num_labeled) / num_samples)
   rampup_val = rampup(epoch,ramp_length)
   return weight_max*rampup_val
+
+
+
+def symmetric_mse_loss(input1, input2):
+    num_classes = input1.size()[1]
+    return torch.sum((input1 - input2)**2) / num_classes
 
 
 
