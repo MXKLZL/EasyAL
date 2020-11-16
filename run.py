@@ -24,6 +24,17 @@ from GroceriesDataset import GroceriesDataset
 from BaseModel import *
 from query_strategy import *
 from Evaluation import *
+import torchvision
+from collections import defaultdict
+from utils import vis
+import os
+import logging
+import warnings
+
+try:
+    os.makedirs('visualization')
+except OSError as e:
+    pass
 
 class_name_map = {'BEANS': 22,
  'CAKE': 6,
@@ -131,6 +142,7 @@ for strategy in strategies:
   var_list = []
   cur_time = []
   embed_dis = []
+  query_each_round = {}
 
   label_idx = label_idx_original
   unlabel_idx = np.setdiff1d(np.arange(len(train_ds)), label_idx)
@@ -156,7 +168,8 @@ for strategy in strategies:
 
     #query new data
     query_time, query_this_round = query(strategy, Model, NUM_LABEL_PER_ROUND)
-
+    query_each_round[i] = query_this_round
+    
     #calculate query metric
     images_queried = np.array([train_ds[idx][0].numpy().transpose(1,2,0) for idx in query_this_round])
     ssim = av_SSIM(images_queried, pairs=300)
@@ -196,6 +209,12 @@ for strategy in strategies:
   allvar.append(var_list)
   alltime.append(cur_time)
   allembed.append(embed_dis)
+    
+  logger = logging.getLogger()
+  old_level = logger.level
+  logger.setLevel(100)
+  vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
+  logger.setLevel(old_level)
 #calculate f1-score
 print(dict(zip(strategies, get_auc(allacc, strategies))))
 
