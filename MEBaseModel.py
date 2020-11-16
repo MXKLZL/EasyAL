@@ -93,22 +93,27 @@ class TEModel(BaseModel):
 
 
 
-def unsup_loss(output,pseudo_label,unlabel_weight):
+def unsup_loss(output,ensemble,unlabel_weight):
   loss = nn.MSELoss(reduction = 'sum')
-  num_classes = output.size()[1]
-  return unlabel_weight*loss(F.softmax(output, dim=1),F.softmax(pseudo_label, dim=1))/num_classes
+  return unlabel_weight*(loss(F.softmax(output, dim=1),F.softmax(ensemble, dim=1))/output.numel())
 
 
-def sup_loss(output,labels,weights = None):
+def sup_loss(output,labels,indicator,weights = None):
+  label_output = output[indicator]
+  ground_truth = labels[indicator]
+
+  if len(label_output) > 0:
     loss = nn.CrossEntropyLoss(weight = weights,reduction = 'sum')
-    label_loss = loss(output,labels)
+    label_loss = loss(label_output,ground_truth)
+
     return label_loss
+  return torch.tensor(0.0,requires_grad=False)
 
 
 
 def total_loss(output, ensemble,labels,indicator,unlabel_weight,class_weight):
   ul = unsup_loss(output,ensemble,unlabel_weight)
-  sl = sup_loss(output,labels,indicator,weights = class_weight)
+  sl = sup_loss(output,labels,indicator,weights = class_weight)/len(output)
 
   return ul+sl, ul, sl
 
