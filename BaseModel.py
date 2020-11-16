@@ -24,8 +24,8 @@ class BaseModel():
         dataset_unlabeled = torch.utils.data.Subset(dataset, unlabeled_index)
 
         self.dataset_unlabeled = dataset_unlabeled
-        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['batch_size'])
-        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['batch_size'])
+        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['labeled_batch_size'])
+        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['unlabeled_batch_size'])
         self.model_name = model_name
         self.model = self.__get_model(model_name)
         

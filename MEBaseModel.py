@@ -12,10 +12,11 @@ class TEModel(BaseModel):
         
     def fit(self):
         global_step = 0
-        self.dataset.set_mode(0)
+        self.dataset.set_mode(2)
         batch_size = self.configs['batch_size']
         alpha = self.configs['alpha']
         ramp_length = self.configs['ramp_length']
+        logit_distance_cost = 1e-2
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
 
@@ -52,35 +53,56 @@ class TEModel(BaseModel):
 
             labeled_loader_iter = iter(self.data_loader_labeled)
 
-            for i, (inputs_u, labels_u) in self.data_loader_unlabeled:
+            for i, ((input_u, input_u_ema), labels_u) in self.data_loader_unlabeled:
                 try:
-                    input_l, labels_l = next(labeled_loader_iter)
+                    (input_l, input_l_ema), labels_l = next(labeled_loader_iter)
                 except StopIteration:
                     labeled_loader_iter = iter(self.data_loader_labeled)
-                    input_l, labels_l = next(labeled_loader_iter)
+                    (input_l, input_l_ema), labels_l = next(labeled_loader_iter)
 
+                # adjust learning rate missed
 
                 optimizer.zero_grad()
-                outputs_batch = self.model(inputs)
-                _, preds = torch.max(outputs_batch, 1)
+                minibatch_size = self.configs['labeled_batch_size'] + self.configs['unlabeled_batch_size']
+                labeled_minibatch_size = self.configs['labeled_batch_size']
 
-                z_batch = z[i*batch_size: (i+1)*batch_size].detach()
-                labeled_mask_batch = labeled_mask[i*batch_size: (i+1)*batch_size]
-                loss, ul, sl = total_loss(outputs_batch, z_batch,labels,labeled_mask_batch,weight,loss_weights)
+                ema_input = torch.cat(input_l_ema, input_u_ema)
+                model_input = torch.cat(input_l, input_u)
+                labels = torch.cat(labels_l, labels_u)
 
-                outputs[i * batch_size: (i + 1) * batch_size] = outputs_batch.detach().clone()
+                labeled_mask_batch = np.array(np.zeros(minibatch_size), dtype=bool)
+                labeled_mask_batch[:labeled_minibatch_size] = True
 
+                ema_model_out = self.ema_model(ema_input)
+                model_out = self.model(model_input)
+
+                assert len(ema_model_out) == 2
+                assert len(model_out) == 2
+
+                logit1, logit2 = model_out
+                ema_logit, _ = ema_model_out
+
+                if logit_distance_cost >= 0:
+                    class_logit, cons_logit = logit1, logit2
+                else:
+                    class_logit, cons_logit = logit1, logit1
+                    res_loss = 0
+
+                ema_logit = ema_logit.detch()
+
+                _, preds = torch.max(class_logit, 1)
+
+                loss, ul, sl, rl = total_loss()
                 loss.backward()
                 optimizer.step()
+                global_step += 1
+                update_ema_variables(self.model, self.ema_model,alpha, global_step)
 
-                running_loss += loss.item() * inputs.size(0)
-                running_sl += sl.item() * inputs.size(0)
-                running_ul += ul.item() * inputs.size(0)
+                running_loss += loss.item() * model_input.size(0)
+                running_sl += sl.item() * model_input.size(0)
+                running_ul += ul.item() * model_input.size(0)
                 running_corrects_lb += torch.sum(preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
                 running_corrects_ulb += torch.sum(preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
-            
-            Z = alpha * Z + (1. - alpha) * outputs
-            z = Z * (1. / (1. - alpha ** (epoch + 1)))
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / len(self.labeled_index)
@@ -92,6 +114,10 @@ class TEModel(BaseModel):
             print(f'Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
 
 
+def update_ema_variables(model, ema_model, alpha, global_step):
+    alpha = min(1 - 1 / (global_step + 1), alpha)
+    for ema_param, param in zip(ema_model.parameters(), model.parameters()):
+        ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
 
 def unsup_loss(output,ensemble,unlabel_weight):
   loss = nn.MSELoss(reduction = 'sum')
