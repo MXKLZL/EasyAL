@@ -84,6 +84,7 @@ configs = {'transforms': [transforms.Compose([
                                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
                                 TransformTwice(transforms.Compose([
                                             transforms.Resize(224),
+                                            transforms.RandomAffine(30, scale = (0.8,1.5)),
                                             transforms.ToTensor(),
                                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]))
                                             ],

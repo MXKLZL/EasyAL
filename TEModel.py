@@ -102,7 +102,7 @@ def sup_loss(output,labels,indicator,weights = None):
   ground_truth = labels[indicator]
 
   if len(label_output) > 0:
-    loss = nn.CrossEntropyLoss(weight = weights)
+    loss = nn.CrossEntropyLoss(weight = weights,reduction = 'sum')
     label_loss = loss(label_output,ground_truth)
 
     return label_loss
@@ -112,7 +112,7 @@ def sup_loss(output,labels,indicator,weights = None):
 
 def total_loss(output, ensemble,labels,indicator,unlabel_weight,class_weight):
   ul = unsup_loss(output,ensemble,unlabel_weight)
-  sl = sup_loss(output,labels,indicator,weights = class_weight)
+  sl = sup_loss(output,labels,indicator,weights = class_weight)/len(output)
 
   return ul+sl, ul, sl
 
