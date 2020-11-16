@@ -2,7 +2,7 @@ import torch.nn as nn
 
 class TwoOutputClassifier(nn.Module):
     def __init__(self, in_features, num_classes):
-        super(TwoOutputClassfier, self).__init__()
+        super(TwoOutputClassifier, self).__init__()
         self.fc1 = nn.Linear(in_features, num_classes,bias=True)
         self.fc2 = nn.Linear(in_features, num_classes,bias=True)
         self.dropout = nn.Dropout(p=0.2, inplace=False)

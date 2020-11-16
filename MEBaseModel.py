@@ -129,7 +129,7 @@ def sup_loss(output,labels,indicator,weights = None):
   ground_truth = labels[indicator]
 
   if len(label_output) > 0:
-    loss = nn.CrossEntropyLoss(weight = weights)
+    loss = nn.CrossEntropyLoss(weight = weights,reduction = 'sum')
     label_loss = loss(label_output,ground_truth)
 
     return label_loss
@@ -139,7 +139,7 @@ def sup_loss(output,labels,indicator,weights = None):
 
 def total_loss(output, ensemble,labels,indicator,unlabel_weight,class_weight):
   ul = unsup_loss(output,ensemble,unlabel_weight)
-  sl = sup_loss(output,labels,indicator,weights = class_weight)
+  sl = sup_loss(output,labels,indicator,weights = class_weight)/len(output)
 
   return ul+sl, ul, sl
 
@@ -158,6 +158,12 @@ def weight_scheduler(epoch, ramp_length, weight_max,num_labeled, num_samples):
   weight_max = weight_max * (float(num_labeled) / num_samples)
   rampup_val = rampup(epoch,ramp_length)
   return weight_max*rampup_val
+
+
+
+def symmetric_mse_loss(input1, input2):
+    num_classes = input1.size()[1]
+    return torch.sum((input1 - input2)**2) / num_classes
 
 
 
