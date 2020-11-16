@@ -5,10 +5,36 @@ from torchvision import datasets, models
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from BaseModel import BaseModel
+from TwoOutputClassifier import TwoOutputClassifier
 
-class TEModel(BaseModel):
+class MEBaseModel(BaseModel):
     def __init__(self, dataset, model_name, labeled_index, configs):
         super().__init__(dataset, model_name, labeled_index, configs)
+
+        self.model = self.__get_model(model_name)
+        self.ema_model = self.__get_model(model_name, ema = True)
+
+
+    
+    def __get_model(self, model_name,ema = False):
+
+        if model_name == 'mobilenet':
+            model = models.mobilenet_v2(pretrained=True)
+            num_ftrs = model.classifier[1].in_features
+            model.classifier = TwoOutputClassifier(num_ftrs, self.num_class)
+            model = model.to(self.device)
+            children = list(list(model.children())[0].children())
+        
+        for child in children[:len(children) - self.configs['num_ft_layers']]:
+            for param in child.parameters():
+                param.require_grad = False
+        
+        if ema:
+            for param in model.parameters():
+                param.detach_()
+
+
+        return model
         
     def fit(self):
         global_step = 0
@@ -111,11 +137,12 @@ def sup_loss(output,labels,indicator,weights = None):
 
 
 
-def total_loss(output, ensemble,labels,indicator,unlabel_weight,class_weight):
-  ul = unsup_loss(output,ensemble,unlabel_weight)
-  sl = sup_loss(output,labels,indicator,weights = class_weight)/len(output)
+def total_loss(class_output,cons_output,ensemble,labels,indicator,unlabel_weight,class_weight,res_weight):
+  ul = unsup_loss(cons_output,ensemble,unlabel_weight)
+  sl = sup_loss(class_output,labels,indicator,weights = class_weight)/len(class_output)
+  rl = symmetric_mse_loss(class_output,cons_output)
 
-  return ul+sl, ul, sl
+  return ul+sl+res_weight*rl, ul, sl, rl
 
 
 def rampup(epoch,ramp_length):
@@ -138,6 +165,21 @@ def weight_scheduler(epoch, ramp_length, weight_max,num_labeled, num_samples):
 def symmetric_mse_loss(input1, input2):
     num_classes = input1.size()[1]
     return torch.sum((input1 - input2)**2) / num_classes
+
+
+
+
+def create_model(model_name,ema=False):
+
+
+        if ema:
+            for param in model.parameters():
+                param.detach_()
+
+        return model
+
+
+
 
 
 
