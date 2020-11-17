@@ -79,6 +79,8 @@ class MEBaseModel(BaseModel):
 
             labeled_loader_iter = iter(self.data_loader_labeled)
 
+            label_count = 0
+
             for i, ((input_u, input_u_ema), labels_u) in enumerate(self.data_loader_unlabeled):
                 try:
                     (input_l, input_l_ema), labels_l = next(labeled_loader_iter)
@@ -89,12 +91,20 @@ class MEBaseModel(BaseModel):
                 # adjust learning rate missed
 
                 optimizer.zero_grad()
-                minibatch_size = self.configs['labeled_batch_size'] + self.configs['unlabeled_batch_size']
-                labeled_minibatch_size = self.configs['labeled_batch_size']
+                #minibatch_size = self.configs['labeled_batch_size'] + self.configs['unlabeled_batch_size']
+                #labeled_minibatch_size = self.configs['labeled_batch_size']
+                labeled_minibatch_size = input_l.size(0)
+                minibatch_size = input_u.size(0) + labeled_minibatch_size
+                label_count += labeled_minibatch_size
 
-                ema_input = torch.cat(input_l_ema, input_u_ema)
-                model_input = torch.cat(input_l, input_u)
-                labels = torch.cat(labels_l, labels_u)
+
+                ema_input = torch.cat((input_l_ema, input_u_ema),0)
+                model_input = torch.cat((input_l, input_u),0)
+                labels = torch.cat((labels_l, labels_u))
+
+                ema_input = ema_input.to(self.device)
+                model_input = model_input.to(self.device)
+                labels = labels.to(self.device)
 
                 labeled_mask_batch = np.array(np.zeros(minibatch_size), dtype=bool)
                 labeled_mask_batch[:labeled_minibatch_size] = True
@@ -114,7 +124,7 @@ class MEBaseModel(BaseModel):
                     class_logit, cons_logit = logit1, logit1
                     res_loss = 0
 
-                ema_logit = ema_logit.detch()
+                ema_logit = ema_logit.detach()
 
                 _, preds = torch.max(class_logit, 1)
 
@@ -131,7 +141,7 @@ class MEBaseModel(BaseModel):
                 running_corrects_ulb += torch.sum(preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
 
             epoch_loss = running_loss / self.num_train
-            epoch_acc_lb = running_corrects_lb.double() / len(self.labeled_index)
+            epoch_acc_lb = running_corrects_lb.double() / label_count
             epoch_acc_ulb = running_corrects_ulb.double() / (self.num_train - len(self.labeled_index))
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
@@ -143,7 +153,7 @@ class MEBaseModel(BaseModel):
 def update_ema_variables(model, ema_model, alpha, global_step):
     alpha = min(1 - 1 / (global_step + 1), alpha)
     for ema_param, param in zip(ema_model.parameters(), model.parameters()):
-        ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
+        ema_param.data.mul_(alpha).add_(param.data,alpha = 1 - alpha)
 
 
 def unsup_loss(output,ensemble,unlabel_weight):
