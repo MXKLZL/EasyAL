@@ -79,7 +79,7 @@ class MEBaseModel(BaseModel):
 
             labeled_loader_iter = iter(self.data_loader_labeled)
 
-            for i, ((input_u, input_u_ema), labels_u) in self.data_loader_unlabeled:
+            for i, ((input_u, input_u_ema), labels_u) in enumerate(self.data_loader_unlabeled):
                 try:
                     (input_l, input_l_ema), labels_l = next(labeled_loader_iter)
                 except StopIteration:
@@ -167,7 +167,7 @@ def sup_loss(output,labels,indicator,weights = None):
 def total_loss(class_output,cons_output,ensemble,labels,indicator,unlabel_weight,class_weight,res_weight):
   ul = unsup_loss(cons_output,ensemble,unlabel_weight)
   sl = sup_loss(class_output,labels,indicator,weights = class_weight)/len(class_output)
-  rl = symmetric_mse_loss(class_output,cons_output)
+  rl = symmetric_mse_loss(class_output,cons_output)/len(class_output)
 
   return ul+sl+res_weight*rl, ul, sl, rl
 
