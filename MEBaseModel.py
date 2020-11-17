@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from BaseModel import BaseModel
 from TwoOutputClassifier import TwoOutputClassifier
-from Evaluation import *
+from Evaluation import classification_evaluation
 
 class MEBaseModel(BaseModel):
     def __init__(self, dataset, model_name, labeled_index, configs,test_ds = None,pt = True):

@@ -5,7 +5,7 @@ from torchvision import datasets, models
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from BaseModel import BaseModel
-from Evaluation import *
+from Evaluation import classification_evaluation
 
 class TEModel(BaseModel):
     def __init__(self, dataset, model_name, labeled_index, configs, test_ds = None):
