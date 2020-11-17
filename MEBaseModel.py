@@ -29,7 +29,7 @@ class MEBaseModel(BaseModel):
             model = model.to(self.device)
             children = list(list(model.children())[0].children())
         
-        if pretain:
+        if pretrain:
             for child in children[:len(children) - self.configs['num_ft_layers']]:
                 for param in child.parameters():
                     param.require_grad = False
