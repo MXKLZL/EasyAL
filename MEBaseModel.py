@@ -6,13 +6,17 @@ import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from BaseModel import BaseModel
 from TwoOutputClassifier import TwoOutputClassifier
+from Evaluation import *
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs):
+    def __init__(self, dataset, model_name, labeled_index, configs,test_ds = None):
         super().__init__(dataset, model_name, labeled_index, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema = True)
+        if test_ds:
+            self.testloader = torch.utils.data.DataLoader(test_ds, batch_size=32)
+            self.test_target = test_ds.target_list
 
 
     
@@ -35,6 +39,30 @@ class MEBaseModel(BaseModel):
 
 
         return model
+    
+    def predict(self, test_data_loader):
+        self.dataset.set_mode(1)
+        self.model.eval()
+        preds = None
+        with torch.no_grad():
+            for inputs, labels in test_data_loader:
+                
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                class_logit,cons_logit = self.model(inputs)
+                class_logit = F.softmax(class_logit, dim=1)
+                class_logit = class_logit.cpu()
+                if preds is not None:
+                    preds = torch.cat((preds, class_logit))
+                else:
+                    preds = class_logit
+        
+        return preds
+    
+    def pred_acc(self,testloader,test_target):
+        _, pred = torch.max(self.predict(testloader), 1)
+        return classification_evaluation(pred, test_target, 'f1', 'weighted')
         
     def fit(self):
         global_step = 0
@@ -72,6 +100,7 @@ class MEBaseModel(BaseModel):
             running_loss = 0.0
             running_sl = 0.0
             running_ul = 0.0
+            running_rl = 0.0
             running_corrects_lb = 0
             running_corrects_ulb = 0
 
@@ -137,17 +166,30 @@ class MEBaseModel(BaseModel):
                 running_loss += loss.item() * model_input.size(0)
                 running_sl += sl.item() * model_input.size(0)
                 running_ul += ul.item() * model_input.size(0)
+                running_rl += rl.item() * model_input.size(0)
                 running_corrects_lb += torch.sum(preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
                 running_corrects_ulb += torch.sum(preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
+            
+            
+
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / label_count
             epoch_acc_ulb = running_corrects_ulb.double() / (self.num_train - len(self.labeled_index))
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
+            epoch_rl = running_rl / self.num_train
 
 
-            print(f'Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
+            print(f'Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} RL {epoch_rl: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
+            
+            if self.testloader:
+                test_acc = self.pred_acc(self.testloader,self.test_target)
+                print(f'Test_Acc {test_acc : .4f} ')
+            
+            #set mode back to two ouput
+            self.dataset.set_mode(2)
+    
 
 
 def update_ema_variables(model, ema_model, alpha, global_step):
@@ -202,6 +244,8 @@ def weight_scheduler(epoch, ramp_length, weight_max,num_labeled, num_samples):
 def symmetric_mse_loss(input1, input2):
     num_classes = input1.size()[1]
     return torch.sum((input1 - input2)**2) / num_classes
+
+
 
 
 
