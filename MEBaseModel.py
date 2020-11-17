@@ -9,29 +9,30 @@ from TwoOutputClassifier import TwoOutputClassifier
 from Evaluation import *
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs,test_ds = None):
+    def __init__(self, dataset, model_name, labeled_index, configs,test_ds = None,pt = True):
         super().__init__(dataset, model_name, labeled_index, configs)
 
-        self.model = self.__get_model(model_name)
-        self.ema_model = self.__get_model(model_name, ema = True)
+        self.model = self.__get_model(model_name,pretrain = pt)
+        self.ema_model = self.__get_model(model_name, ema = True,pretrain = pt)
         if test_ds:
             self.testloader = torch.utils.data.DataLoader(test_ds, batch_size=32)
             self.test_target = test_ds.target_list
 
 
     
-    def __get_model(self, model_name,ema = False):
+    def __get_model(self, model_name,ema = False, pretrain = True):
 
         if model_name == 'mobilenet':
-            model = models.mobilenet_v2(pretrained=True)
+            model = models.mobilenet_v2(pretrained=pretrain)
             num_ftrs = model.classifier[1].in_features
             model.classifier = TwoOutputClassifier(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(list(model.children())[0].children())
         
-        for child in children[:len(children) - self.configs['num_ft_layers']]:
-            for param in child.parameters():
-                param.require_grad = False
+        if pretain:
+            for child in children[:len(children) - self.configs['num_ft_layers']]:
+                for param in child.parameters():
+                    param.require_grad = False
         
         if ema:
             for param in model.parameters():
