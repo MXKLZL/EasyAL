@@ -41,25 +41,25 @@ class MEBaseModel(BaseModel):
 
         return model
     
-    def predict(self, test_data_loader):
-        self.dataset.set_mode(1)
-        self.model.eval()
-        preds = None
-        with torch.no_grad():
-            for inputs, labels in test_data_loader:
+    # def predict(self, test_data_loader):
+    #     self.dataset.set_mode(1)
+    #     self.model.eval()
+    #     preds = None
+    #     with torch.no_grad():
+    #         for inputs, labels in test_data_loader:
                 
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
+    #             inputs = inputs.to(self.device)
+    #             labels = labels.to(self.device)
 
-                class_logit,cons_logit = self.model(inputs)
-                class_logit = F.softmax(class_logit, dim=1)
-                class_logit = class_logit.cpu()
-                if preds is not None:
-                    preds = torch.cat((preds, class_logit))
-                else:
-                    preds = class_logit
+    #             class_logit,cons_logit = self.model(inputs)
+    #             class_logit = F.softmax(class_logit, dim=1)
+    #             class_logit = class_logit.cpu()
+    #             if preds is not None:
+    #                 preds = torch.cat((preds, class_logit))
+    #             else:
+    #                 preds = class_logit
         
-        return preds
+    #     return preds
     
     def pred_acc(self,testloader,test_target):
         _, pred = torch.max(self.predict(testloader), 1)
@@ -189,7 +189,7 @@ class MEBaseModel(BaseModel):
                 print(f'Test_Acc {test_acc : .4f} ')
             
             #set mode back to two ouput
-            self.dataset.set_mode(2)
+            #self.dataset.set_mode(2)
     
 
 

@@ -184,6 +184,7 @@ class BaseModel():
             print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
 
     def predict(self, test_data_loader):
+        cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
         self.model.eval()
         preds = None
@@ -193,20 +194,25 @@ class BaseModel():
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
+
                 output = self.model(inputs)
-                output = F.softmax(output, dim=1)
+
+                if isinstance(output, tuple):
+                    output = F.softmax(output[0], dim=1)
                 output = output.cpu()
                 if preds is not None:
                     preds = torch.cat((preds, output))
                 else:
                     preds = output
-        
+
+        self.dataset.set_mode(cur_mode)
         return preds
 
     def predict_unlabeled(self):
         return self.predict(self.data_loader_unlabeled)
 
     def get_embedding(self, test_data_loader):
+        cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
 
         if self.model_name in ['resnet18', 'resnet34', 'resnet50']:
@@ -235,7 +241,9 @@ class BaseModel():
             self.model.fc = backup_layer
         if self.model_name == 'mobilenet':
             self.model.classifier[1] = backup_layer
+        
 
+        self.dataset.set_mode(cur_mode)
         return embeddings
 
     def get_embedding_unlabeled(self):

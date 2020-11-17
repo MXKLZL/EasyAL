@@ -5,11 +5,20 @@ from torchvision import datasets, models
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from BaseModel import BaseModel
+from Evaluation import *
 
 class TEModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs):
+    def __init__(self, dataset, model_name, labeled_index, configs, test_ds = None):
         super().__init__(dataset, model_name, labeled_index, configs)
         self.data_loader = torch.utils.data.DataLoader(dataset, batch_size = configs['batch_size'])
+
+        if test_ds:
+          self.testloader = torch.utils.data.DataLoader(test_ds, batch_size=32)
+          self.test_target = test_ds.target_list
+    
+    def pred_acc(self,testloader,test_target):
+      _, pred = torch.max(self.predict(testloader), 1)
+      return classification_evaluation(pred, test_target, 'f1', 'weighted')
         
     def fit(self):
         self.dataset.set_mode(0)
@@ -89,7 +98,9 @@ class TEModel(BaseModel):
 
 
             print(f'Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
-
+            if self.testloader:
+              test_acc = self.pred_acc(self.testloader,self.test_target)
+              print(f'Test_Acc {test_acc : .4f} ')
 
 
 def unsup_loss(output,ensemble,unlabel_weight):
