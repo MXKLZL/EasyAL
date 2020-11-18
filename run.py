@@ -26,7 +26,7 @@ from query_strategy import *
 from Evaluation import *
 import torchvision
 from collections import defaultdict
-from utils import vis
+from utils import *
 import os
 import logging
 import warnings
