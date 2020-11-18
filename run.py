@@ -132,7 +132,7 @@ label_idx_original = get_initial_label(NUM_INITIAL_LAB)
 
 #model for embedding distance
 diversity_model = models.resnet152(pretrained=True)
-
+strategy_queries = {}
 
 for strategy in strategies:
   print(strategy)
@@ -203,6 +203,7 @@ for strategy in strategies:
     print("New {} unlabel images, Total: {} images, Spend time: {}".format(NUM_LABEL_PER_ROUND, len(label_idx), query_time))
 
     print('')
+  strategy_queries[strategy] = query_each_round
   allacc.append(accuracy)
   allssim.append(ssim_list)
   allcost.append(cost_list)
@@ -215,9 +216,12 @@ for strategy in strategies:
   logger.setLevel(100)
   vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
   logger.setLevel(old_level)
+  tsne_vis(train_ds, Model, strategy_queries, f"{strategy}")
 #calculate f1-score
 print(dict(zip(strategies, get_auc(allacc, strategies))))
 
 plot_result(allacc, strategies, 'f1 score')
 
 plot_result(allssim, strategies, 'SSIM')
+
+tsne_vis_each_iter(train_ds, Model, strategy_queries)
