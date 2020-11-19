@@ -57,36 +57,37 @@ class BaseModel():
 
     def __get_model(self, model_name):
         if model_name == 'resnet18':
-            model = models.resnet18(pretrained=True)
+            model = models.resnet18(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'resnet34':
-            model = models.resnet18(pretrained=True)
+            model = models.resnet18(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'resnet50':
-            model = models.resnet50(pretrained=True)
+            model = models.resnet50(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'mobilenet':
-            model = models.mobilenet_v2(pretrained=True)
+            model = models.mobilenet_v2(pretrained=self.configs['pretrained'])
             num_ftrs = model.classifier[1].in_features
             model.classifier[1] = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(list(model.children())[0].children())
         
-        for child in children[:len(children) - self.configs['num_ft_layers']]:
-            for param in child.parameters():
-                param.require_grad = False
+        if self.configs['pretrained']:
+            for child in children[:len(children) - self.configs['num_ft_layers']]:
+                for param in child.parameters():
+                    param.require_grad = False
 
         return model
 
