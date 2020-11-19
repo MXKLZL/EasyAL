@@ -317,5 +317,7 @@ def get_distance(unlabel, label_embedding, strategy):
   elif strategy == 'euclidean':
     return np.linalg.norm(unlabel - label_embedding, axis=1)
   
+def query_scheduler(epoch, strategy, model_class):
+  pass
 
 
