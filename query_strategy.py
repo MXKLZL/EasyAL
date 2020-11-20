@@ -349,6 +349,6 @@ class QueryScheduler():
 
             if self.write_res_fname is not None:
                 with open(self.write_res_fname, 'w+') as fh:
-                    fh.write(str(epoch)+'['+','.join(queried_batch)+']/n]')
+                    fh.write('Epoch:' +str(epoch)+' ['+','.join([str(x) for x in queried_batch])+']\n')
         
         return queried_batch

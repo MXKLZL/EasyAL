@@ -82,7 +82,7 @@ class MEBaseModel(BaseModel):
             if self.query_scheduler is not None:
                 queried_batch = self.query_scheduler(epoch, self)
                 if queried_batch is not None:
-                    self.labeled_index += queried_batch
+                    self.labeled_index = np.concatenate((self.labeled_index,queried_batch))
                     self.__init_data_loaders()
 
             num_labeled = len(self.labeled_index)

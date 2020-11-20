@@ -18,7 +18,7 @@ class BaseModel():
         self.dataset = dataset
         self.semi = semi
         self.teacher_target = teacher_target
-        self.__init_data_loaders()
+        self.init_data_loaders()
         
         self.model_name = model_name
         self.model = self.__get_model(model_name)
@@ -33,7 +33,7 @@ class BaseModel():
           else:
             self.weights[class_id] = 1/class_counts[class_id]
 
-    def __init_data_loaders(self):
+    def init_data_loaders(self):
         unlabeled_index = self.get_unlabeled_index()
         dataset_labeled = torch.utils.data.Subset(self.dataset, self.labeled_index)
         dataset_unlabeled = torch.utils.data.Subset(self.dataset, unlabeled_index)
