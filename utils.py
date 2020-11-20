@@ -33,32 +33,51 @@ def tsne_vis_each_iter(train_ds, Model, strategy_queries):
         
         tsne_vis(train_ds, Model, strategy_queries_iter, f"iteration_{iter_}")
 
-def tsne_vis(train_ds, Model, strategy_queries, name):
+def tsne_vis_each_strategy(train_ds, Model, strategy_queries, strategy_name):
+    strategy_queries_strategy = {}
+    strategy_queries_strategy[strategy_name] = strategy_queries
+    tsne_vis(train_ds, Model, strategy_queries_strategy, f"{strategy_name}_all_iters", iterationLegend=True)
+
+def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False):
     full_idx = np.arange(len(train_ds))
     dataset_query = torch.utils.data.Subset(train_ds, full_idx)
     data_loader_query = torch.utils.data.DataLoader(dataset_query, batch_size = 32)
     embeddings = Model.get_embedding(data_loader_query)
+    num_iter = len(list(strategy_queries.values())[0])
 
     colors = sample(list(mcolors.cnames.keys()), len(strategy_queries))
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
     color_map = {}
-    for idx, s in enumerate(strategy_queries):
-        color_map[s] = colors[idx]
+    if not iterationLegend:
+        for idx, s in enumerate(strategy_queries):
+            color_map[s] = colors[idx]
+    else:
+        if len(colors) < num_iter:
+            colors = colors + list(sample(list(mcolors.cnames.keys()), num_iter-len(colors)))
+        for idx in range(num_iter):
+            color_map[idx] = colors[idx]
 
     tsne = TSNE(n_components=2).fit_transform(embeddings.numpy())
 
-    plt.figure(figsize=(20, 20), dpi=80)
+    plt.figure(figsize=(20, 20), dpi=150)
     ax = plt.gca()
     for s, qs in strategy_queries.items():
         for i, q in qs.items():
             for p in q:
                 x, y = tsne[p][0], tsne[p][1]
-                plt.scatter(x, y, marker=TextPath((0, 0), str(i)), s=250, color=color_map[s])
+                if not iterationLegend:
+                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), s=250, color=color_map[s])
+                else:
+                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), s=250, color=color_map[i])
     h = []
-    for idx, s in enumerate(strategy_queries):
-        h.append(mpatches.Patch(color=color_map[s], label=s))
 
-    plt.legend(handles=h)
+    if not iterationLegend:
+        for idx, s in enumerate(strategy_queries):
+            h.append(mpatches.Patch(color=color_map[s], label=s))
+        plt.legend(handles=h)
+    # else:
+    #     for idx in range(num_iter):
+    #         h.append(mpatches.Patch(color=color_map[idx], label=s))
     plt.savefig(f"{name}.jpg")
 
 

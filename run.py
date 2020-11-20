@@ -217,6 +217,7 @@ for strategy in strategies:
   vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
   logger.setLevel(old_level)
   tsne_vis(train_ds, Model, strategy_queries, f"{strategy}")
+  tsne_vis_each_strategy(train_ds, Model, query_each_round, strategy)
 #calculate f1-score
 print(dict(zip(strategies, get_auc(allacc, strategies))))
 
