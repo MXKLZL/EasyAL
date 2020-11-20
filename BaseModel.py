@@ -18,14 +18,8 @@ class BaseModel():
         self.dataset = dataset
         self.semi = semi
         self.teacher_target = teacher_target
-
-        unlabeled_index = self.get_unlabeled_index()
-        dataset_labeled = torch.utils.data.Subset(dataset, labeled_index)
-        dataset_unlabeled = torch.utils.data.Subset(dataset, unlabeled_index)
-
-        self.dataset_unlabeled = dataset_unlabeled
-        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['labeled_batch_size'])
-        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['unlabeled_batch_size'])
+        self.__init_data_loaders()
+        
         self.model_name = model_name
         self.model = self.__get_model(model_name)
         
@@ -38,6 +32,15 @@ class BaseModel():
             self.weights[class_id] = 1
           else:
             self.weights[class_id] = 1/class_counts[class_id]
+
+    def __init_data_loaders(self):
+        unlabeled_index = self.get_unlabeled_index()
+        dataset_labeled = torch.utils.data.Subset(self.dataset, self.labeled_index)
+        dataset_unlabeled = torch.utils.data.Subset(self.dataset, unlabeled_index)
+
+        self.dataset_unlabeled = dataset_unlabeled
+        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = self.configs['labeled_batch_size'])
+        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = self.configs['unlabeled_batch_size'])
 
     def query_cost(self, query_idx, weights=None):
         if weights is None:

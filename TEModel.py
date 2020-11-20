@@ -76,7 +76,7 @@ class TEModel(BaseModel):
             else:
                 weight = 0
 
-            for i, (inputs, labels) in self.data_loader:
+            for i, (inputs, labels) in enumerate(self.data_loader):
                 labels = labels.to(self.device)
                 inputs = inputs.to(self.device)
 

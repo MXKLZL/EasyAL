@@ -10,11 +10,11 @@ from Evaluation import classification_evaluation
 
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs, test_ds=None, pt=True, query_scheduler=None, weight=True):
+    def __init__(self, dataset, model_name, labeled_index, configs, test_ds=None, query_scheduler=None, weight=True):
         super().__init__(dataset, model_name, labeled_index, configs)
 
-        self.model = self.__get_model(model_name, pretrain=pt)
-        self.ema_model = self.__get_model(model_name, ema=True, pretrain=pt)
+        self.model = self.__get_model(model_name, pretrain=configs['pretrained'])
+        self.ema_model = self.__get_model(model_name, ema=True, pretrain=configs['pretrained'])
         self.query_scheduler = query_scheduler
         self.use_weight = weight
 
@@ -78,6 +78,12 @@ class MEBaseModel(BaseModel):
         self.model.train()
 
         for epoch in tqdm(range(num_epochs)):
+            
+            if self.query_scheduler is not None:
+                queried_batch = self.query_scheduler(epoch, self)
+                if queried_batch is not None:
+                    self.labeled_index += queried_batch
+                    self.__init_data_loaders()
 
             num_labeled = len(self.labeled_index)
 
