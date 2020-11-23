@@ -20,7 +20,9 @@ import random
 import torch
 import itertools
 
-def tsne_vis_each_iter(train_ds, Model, strategy_queries):
+gdrive_folder_path = "/content/gdrive/My Drive/SCHOOL/Capstone/visualization"
+
+def tsne_vis_each_iter(train_ds, Model, strategy_queries, opacity=False):
     num_iter = len(list(strategy_queries.values())[0])
 
     for iter_ in range(num_iter):
@@ -30,15 +32,16 @@ def tsne_vis_each_iter(train_ds, Model, strategy_queries):
             for i, q in qs.items():
                 if i == iter_:
                     strategy_queries_iter[s][i] = q
-        
-        tsne_vis(train_ds, Model, strategy_queries_iter, f"iteration_{iter_}")
+        file_name = f"iteration_{iter_}_opacity" if opacity else f"iteration_{iter_}"
+        tsne_vis(train_ds, Model, strategy_queries_iter, file_name, opacity=opacity)
 
-def tsne_vis_each_strategy(train_ds, Model, strategy_queries, strategy_name):
+def tsne_vis_each_strategy(train_ds, Model, strategy_queries, strategy_name, opacity=False):
     strategy_queries_strategy = {}
     strategy_queries_strategy[strategy_name] = strategy_queries
-    tsne_vis(train_ds, Model, strategy_queries_strategy, f"{strategy_name}_all_iters", iterationLegend=True)
+    file_name = f"{strategy_name}_all_iters_opacity" if opacity else f"{strategy_name}_all_iters"
+    tsne_vis(train_ds, Model, strategy_queries_strategy, file_name, iterationLegend=True, opacity=opacity)
 
-def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False):
+def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False, opacity=False):
     full_idx = np.arange(len(train_ds))
     dataset_query = torch.utils.data.Subset(train_ds, full_idx)
     data_loader_query = torch.utils.data.DataLoader(dataset_query, batch_size = 32)
@@ -61,24 +64,33 @@ def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False):
 
     plt.figure(figsize=(20, 20), dpi=150)
     ax = plt.gca()
+    s_name = ""
+    opacities = list((np.arange(0, num_iter) + 1  ) / num_iter)[::-1]
+
     for s, qs in strategy_queries.items():
+        s_name = s
         for i, q in qs.items():
             for p in q:
                 x, y = tsne[p][0], tsne[p][1]
                 if not iterationLegend:
-                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), s=250, color=color_map[s])
+                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), 
+                                s=250, color=color_map[s], alpha=opacities[int(i)] if opacity else None)
                 else:
-                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), s=250, color=color_map[i])
+                    plt.scatter(x, y, marker=TextPath((0, 0), str(i)), 
+                                s=250, color=color_map[i], alpha=opacities[int(i)] if opacity else None)
     h = []
 
     if not iterationLegend:
         for idx, s in enumerate(strategy_queries):
             h.append(mpatches.Patch(color=color_map[s], label=s))
         plt.legend(handles=h)
-    # else:
+        plt.title("embedding tsne by strategy")
+    else:
+        plt.title(f"{s_name} strategy embedding tsne by iteration")
     #     for idx in range(num_iter):
     #         h.append(mpatches.Patch(color=color_map[idx], label=s))
-    plt.savefig(f"{name}.jpg")
+    # plt.savefig(f"visualization/{name}.jpg")
+    plt.savefig(f"{gdrive_folder_path}/{name}.jpg")
 
 
 def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10):
@@ -122,4 +134,5 @@ def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10):
         yticks[-1].label1.set_visible(True)
         plt.gca().xaxis.set_ticks_position('none') 
         plt.gca().yaxis.set_ticks_position('none') 
-        plt.savefig(f"visualization/{strategy}_class_{k}.jpg", bbox_inches='tight')
+        # plt.savefig(f"visualization/{strategy}_class_{k}.jpg", bbox_inches='tight')
+        plt.savefig(f"{gdrive_folder_path}/{strategy}_class_{k}.jpg", bbox_inches='tight')
