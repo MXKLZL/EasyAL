@@ -58,24 +58,10 @@ class MEBaseModel(BaseModel):
         optimizer = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
 
-        loss_weights = None
-        if self.configs['weighted_loss']:
-            loss_weights = []
-            for class_name in self.dataset.classes:
-                class_id = self.dataset.class_name_map[class_name]
-                if class_id in self.class_counts:
-                    loss_weights.append(self.class_counts[class_id])
-                else:
-                    loss_weights.append(1e-4)
-
-            loss_weights = sum(
-                loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
-
-            if torch.cuda.is_available():
-                loss_weights = loss_weights.cuda()
-
         num_epochs = self.configs['epoch']
         self.model.train()
+
+        recalc_class_weights = True
 
         for epoch in tqdm(range(num_epochs)):
             
@@ -84,7 +70,27 @@ class MEBaseModel(BaseModel):
                 if queried_batch is not None:
                     self.labeled_index = np.concatenate((self.labeled_index,queried_batch))
                     self.init_data_loaders()
+                    recalc_class_weights = True
+                    self.init_class_weights()
 
+            if recalc_class_weights:
+                loss_weights = None
+                if self.configs['weighted_loss']:
+                    loss_weights = []
+                    for class_name in self.dataset.classes:
+                        class_id = self.dataset.class_name_map[class_name]
+                        if class_id in self.class_counts:
+                            loss_weights.append(self.class_counts[class_id])
+                        else:
+                            loss_weights.append(1e-4)
+
+                    loss_weights = sum(
+                        loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
+
+                    if torch.cuda.is_available():
+                        loss_weights = loss_weights.cuda()
+                recalc_class_weights = False
+                
             num_labeled = len(self.labeled_index)
 
             running_loss = 0.0

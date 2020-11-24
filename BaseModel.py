@@ -19,15 +19,19 @@ class BaseModel():
         self.semi = semi
         self.teacher_target = teacher_target
         self.init_data_loaders()
+        self.init_class_weights()
         
         self.model_name = model_name
         self.model = self.__get_model(model_name)
         
+        
+
+    def init_class_weights(self):
         class_counts = dict(Counter(sample_tup[1] for sample_tup in self.data_loader_labeled.dataset))
         self.class_counts = dict(sorted(class_counts.items()))
         self.weights = {}
         for class_name in self.dataset.classes:
-          class_id = dataset.class_name_map[class_name]
+          class_id = self.dataset.class_name_map[class_name]
           if class_id not in class_counts:
             self.weights[class_id] = 1
           else:
