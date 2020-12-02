@@ -18,26 +18,33 @@ class BaseModel():
         self.dataset = dataset
         self.semi = semi
         self.teacher_target = teacher_target
-
-        unlabeled_index = self.get_unlabeled_index()
-        dataset_labeled = torch.utils.data.Subset(dataset, labeled_index)
-        dataset_unlabeled = torch.utils.data.Subset(dataset, unlabeled_index)
-
-        self.dataset_unlabeled = dataset_unlabeled
-        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = configs['batch_size'])
-        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = configs['batch_size'])
+        self.init_data_loaders()
+        self.init_class_weights()
+        
         self.model_name = model_name
         self.model = self.__get_model(model_name)
         
+        
+
+    def init_class_weights(self):
         class_counts = dict(Counter(sample_tup[1] for sample_tup in self.data_loader_labeled.dataset))
         self.class_counts = dict(sorted(class_counts.items()))
         self.weights = {}
         for class_name in self.dataset.classes:
-          class_id = dataset.class_name_map[class_name]
+          class_id = self.dataset.class_name_map[class_name]
           if class_id not in class_counts:
             self.weights[class_id] = 1
           else:
             self.weights[class_id] = 1/class_counts[class_id]
+
+    def init_data_loaders(self):
+        unlabeled_index = self.get_unlabeled_index()
+        dataset_labeled = torch.utils.data.Subset(self.dataset, self.labeled_index)
+        dataset_unlabeled = torch.utils.data.Subset(self.dataset, unlabeled_index)
+
+        self.dataset_unlabeled = dataset_unlabeled
+        self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled, batch_size = self.configs['labeled_batch_size'])
+        self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled, batch_size = self.configs['unlabeled_batch_size'])
 
     def query_cost(self, query_idx, weights=None):
         if weights is None:
@@ -57,36 +64,37 @@ class BaseModel():
 
     def __get_model(self, model_name):
         if model_name == 'resnet18':
-            model = models.resnet18(pretrained=True)
+            model = models.resnet18(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'resnet34':
-            model = models.resnet18(pretrained=True)
+            model = models.resnet18(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'resnet50':
-            model = models.resnet50(pretrained=True)
+            model = models.resnet50(pretrained=self.configs['pretrained'])
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(model.children())
 
         if model_name == 'mobilenet':
-            model = models.mobilenet_v2(pretrained=True)
+            model = models.mobilenet_v2(pretrained=self.configs['pretrained'])
             num_ftrs = model.classifier[1].in_features
             model.classifier[1] = nn.Linear(num_ftrs, self.num_class)
             model = model.to(self.device)
             children = list(list(model.children())[0].children())
         
-        for child in children[:len(children) - self.configs['num_ft_layers']]:
-            for param in child.parameters():
-                param.require_grad = False
+        if self.configs['pretrained']:
+            for child in children[:len(children) - self.configs['num_ft_layers']]:
+                for param in child.parameters():
+                    param.require_grad = False
 
         return model
 
@@ -184,6 +192,7 @@ class BaseModel():
             print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
 
     def predict(self, test_data_loader):
+        cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
         self.model.eval()
         preds = None
@@ -193,20 +202,25 @@ class BaseModel():
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
+
                 output = self.model(inputs)
-                output = F.softmax(output, dim=1)
+
+                if isinstance(output, tuple):
+                    output = F.softmax(output[0], dim=1)
                 output = output.cpu()
                 if preds is not None:
                     preds = torch.cat((preds, output))
                 else:
                     preds = output
-        
+
+        self.dataset.set_mode(cur_mode)
         return preds
 
     def predict_unlabeled(self):
         return self.predict(self.data_loader_unlabeled)
 
     def get_embedding(self, test_data_loader):
+        cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
 
         if self.model_name in ['resnet18', 'resnet34', 'resnet50']:
@@ -235,7 +249,9 @@ class BaseModel():
             self.model.fc = backup_layer
         if self.model_name == 'mobilenet':
             self.model.classifier[1] = backup_layer
+        
 
+        self.dataset.set_mode(cur_mode)
         return embeddings
 
     def get_embedding_unlabeled(self):

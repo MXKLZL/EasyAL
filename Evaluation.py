@@ -12,6 +12,26 @@ import random
 import torch
 import itertools
 
+import cv2
+import os
+from functools import partial
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+import tensorflow as tf
+
+# from alibi_detect.od import LLR
+# from alibi_detect.models import PixelCNN
+# from alibi_detect.utils.fetching import fetch_detector
+# from alibi_detect.utils.saving import save_detector, load_detector
+# from alibi_detect.utils.prediction import predict_batch
+# from alibi_detect.utils.visualize import plot_roc
+# import warnings
+
+
 def av_SSIM(images, other=None, pairs=1000):
     l = np.zeros(pairs)
     if other:
@@ -210,3 +230,53 @@ def plot_confusion_matrix(cm,
     plt.ylabel('True label')
     plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
     plt.show()
+
+def OOD_evaluation(labeled_index, queried_index, dataset):
+    warnings.filterwarnings('ignore')
+
+    dataset.set_mode(2)
+    def preprocess(index, dataset):
+        imgs = [dataset[i][0].numpy().transpose(1,2,0)*255 for i in index]
+        imgs = [cv2.resize(img, dsize=(56,56)) for img in imgs]
+        imgs = [img.astype(int) for img in imgs]
+        imgs = np.array(imgs)
+        return imgs
+    
+    image_shape = (56, 56, 3)
+
+    model = PixelCNN(
+        image_shape=image_shape,
+        num_resnet=5,
+        num_hierarchies=2,
+        num_filters=32,
+        num_logistic_mix=1,
+        receptive_field_dims=(3, 3),
+        dropout_p=.3,
+        l2_weight=0.
+    )
+
+    imgs_labeled = preprocess(labeled_index, dataset)
+
+    od = LLR(threshold=None, model=model)
+
+    od.fit(
+        imgs_labeled,
+        mutate_fn_kwargs=dict(rate=.2),
+        mutate_batch_size=1000,
+        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+        epochs=10,
+        batch_size=32
+    )
+
+    od.infer_threshold(imgs_labeled, threshold_perc=95, batch_size=32)
+
+    imgs_queried = preprocess(queried_index, dataset)
+
+    od_preds = od.predict(imgs_queried,
+                      batch_size=32,
+                      outlier_type='instance',    # use 'feature' or 'instance' level
+                      return_feature_score=True,  # scores used to determine outliers
+                      return_instance_score=True)
+
+    outlier_ls = od_preds['data']['is_outlier']
+    return np.sum(outlier_ls)/len(outlier_ls)
