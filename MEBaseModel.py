@@ -56,7 +56,7 @@ class MEBaseModel(BaseModel):
         logit_distance_cost = 1e-2
 
         optimizer = torch.optim.Adam(
-            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
+            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.00003)
 
         num_epochs = self.configs['epoch']
         self.model.train()
