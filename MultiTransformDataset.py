@@ -16,7 +16,7 @@ class TransformTwice:
 
 class MultiTransformDataset(Dataset):
 
-    def __init__(self, path_list, target_list, classes=None, class_name_map=None, root_dir='', transform=None):
+    def __init__(self, path_list, target_list=None, classes=None, class_name_map=None, root_dir='', transform=None):
         """
         Args:
             path_list (list of string): list of path to image files
@@ -30,7 +30,10 @@ class MultiTransformDataset(Dataset):
 
 
         self.path_list = path_list
-        self.target_list = target_list
+        if target_list is not None:
+            self.target_list = target_list
+        else:
+            self.target_list = [-1 for i in path_list]
         self.classes = classes
         self.root_dir = root_dir
         self.transform = transform

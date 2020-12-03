@@ -10,14 +10,14 @@ from Evaluation import classification_evaluation
 
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, query_scheduler=None, weight=True):
+    def __init__(self, dataset, model_name, configs, query_schedule, test_ds=None, weight=True, test_mode=False):
         super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema=True)
-        self.query_scheduler = query_scheduler
+        self.query_schedule = iter(query_schedule)
         self.use_weight = weight
-
+        self.test_mode = test_mode
         if test_ds:
             self.testloader = torch.utils.data.DataLoader(
                 test_ds, batch_size=32)
@@ -64,9 +64,7 @@ class MEBaseModel(BaseModel):
         return classification_evaluation(pred, test_target, criterion, 'weighted')
 
     def fit(self):
-
         self.dataset.set_mode(2)
-        batch_size = self.configs['batch_size']
         alpha = self.configs['alpha']
         ramp_length = self.configs['ramp_length']
         logit_distance_cost = 1e-2
@@ -79,7 +77,13 @@ class MEBaseModel(BaseModel):
         if self.configs['weighted_loss']:
             loss_weights = self.get_loss_weights()
 
-        for epoch in tqdm(range(start_epoch, num_epochs)):
+        try:
+            # get next epoch to stop to wait for query
+            stop_epoch = next(self.query_schedule)
+        except StopIteration: 
+            stop_epoch  = num_epochs
+
+        for epoch in tqdm(range(start_epoch, stop_epoch)):
 
             num_labeled = len(self.labeled_index)
 
@@ -160,13 +164,17 @@ class MEBaseModel(BaseModel):
                 running_rl += rl.item() * model_input.size(0)
                 running_corrects_lb += torch.sum(
                     preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
-                running_corrects_ulb += torch.sum(
-                    preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
+                if self.test_mode:
+                    running_corrects_ulb += torch.sum(
+                        preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / label_count
-            epoch_acc_ulb = running_corrects_ulb.double(
-            ) / (self.num_train - len(self.labeled_index))
+            if self.test_mode:
+                epoch_acc_ulb = running_corrects_ulb.double(
+                ) / (self.num_train - len(self.labeled_index))
+            else:
+                epoch_acc_ulb = -1
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
             epoch_rl = running_rl / self.num_train
