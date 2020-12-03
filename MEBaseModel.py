@@ -24,7 +24,7 @@ class MEBaseModel(BaseModel):
             self.test_target = test_ds.target_list
     
     def update(self):
-        self.labeled_index = self.__get_labeled_index(self.dataset)
+        self.labeled_index = self.get_labeled_index(self.dataset)
         self.init_data_loaders()
         self.init_class_weights()
     
