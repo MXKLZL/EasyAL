@@ -14,7 +14,8 @@ class MEBaseModel(BaseModel):
         super().__init__(dataset, model_name, labeled_index, configs)
 
         self.model = self.__get_model(model_name)
-        self.ema_model = self.__get_model(model_name, ema=True, pretrain=configs['pretrained'])
+        self.ema_model = self.__get_model(
+            model_name, ema=True, pretrain=configs['pretrained'])
         self.query_scheduler = query_scheduler
         self.use_weight = weight
 
@@ -22,13 +23,16 @@ class MEBaseModel(BaseModel):
             self.testloader = torch.utils.data.DataLoader(
                 test_ds, batch_size=32)
             self.test_target = test_ds.target_list
-    
+
+        self.__init_model_set_up()
+
     def update(self):
         self.labeled_index = self.__get_labeled_index(self.dataset)
         self.init_data_loaders()
         self.init_class_weights()
-    
+
     def __get_model(self, model_name, ema=False):
+        model = None
 
         if model_name == 'mobilenet':
             model = models.mobilenet_v2(pretrained=self.configs['pretrained'])
@@ -42,60 +46,42 @@ class MEBaseModel(BaseModel):
                 for param in child.parameters():
                     param.require_grad = False
 
+        assert model is not None, "Invalid model_name"
+
         if ema:
             for param in model.parameters():
                 param.detach_()
 
         return model
 
+    def __init_model_set_up(self):
+        self.optimizer = torch.optim.Adam(
+            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.00003)
+        self.global_step = 0
+        self.start_epoch = 0
+
     def pred_acc(self, testloader, test_target, criterion='f1'):
         _, pred = torch.max(self.predict(testloader), 1)
         return classification_evaluation(pred, test_target, criterion, 'weighted')
 
     def fit(self):
-        global_step = 0
+
         self.dataset.set_mode(2)
         batch_size = self.configs['batch_size']
         alpha = self.configs['alpha']
         ramp_length = self.configs['ramp_length']
         logit_distance_cost = 1e-2
-
-        optimizer = torch.optim.Adam(
-            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.00003)
-
+        optimizer = self.optimizer
         num_epochs = self.configs['epoch']
         self.model.train()
+        start_epoch = self.start_epoch
 
-        recalc_class_weights = True
+        loss_weights = None
+        if self.configs['weighted_loss']:
+            loss_weights = self.get_loss_weights()
 
-        for epoch in tqdm(range(num_epochs)):
-            
-            if self.query_scheduler is not None:
-                queried_batch = self.query_scheduler(epoch, self)
-                if queried_batch is not None:
-                    self.labeled_index = np.concatenate((self.labeled_index,queried_batch))
-                    self.init_data_loaders()
-                    recalc_class_weights = True
-                    self.init_class_weights()
+        for epoch in tqdm(range(start_epoch, num_epochs)):
 
-            if recalc_class_weights:
-                loss_weights = None
-                if self.configs['weighted_loss']:
-                    loss_weights = []
-                    for class_name in self.dataset.classes:
-                        class_id = self.dataset.class_name_map[class_name]
-                        if class_id in self.class_counts:
-                            loss_weights.append(self.class_counts[class_id])
-                        else:
-                            loss_weights.append(1e-4)
-
-                    loss_weights = sum(
-                        loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
-
-                    if torch.cuda.is_available():
-                        loss_weights = loss_weights.cuda()
-                recalc_class_weights = False
-                
             num_labeled = len(self.labeled_index)
 
             running_loss = 0.0
@@ -125,8 +111,8 @@ class MEBaseModel(BaseModel):
                 # adjust learning rate missed
 
                 optimizer.zero_grad()
-                #minibatch_size = self.configs['labeled_batch_size'] + self.configs['unlabeled_batch_size']
-                #labeled_minibatch_size = self.configs['labeled_batch_size']
+                # minibatch_size = self.configs['labeled_batch_size'] + self.configs['unlabeled_batch_size']
+                # labeled_minibatch_size = self.configs['labeled_batch_size']
                 labeled_minibatch_size = input_l.size(0)
                 minibatch_size = input_u.size(0) + labeled_minibatch_size
                 label_count += labeled_minibatch_size
@@ -156,7 +142,6 @@ class MEBaseModel(BaseModel):
                     class_logit, cons_logit = logit1, logit2
                 else:
                     class_logit, cons_logit = logit1, logit1
-                    res_loss = 0
 
                 ema_logit = ema_logit.detach()
 
@@ -166,9 +151,9 @@ class MEBaseModel(BaseModel):
                     class_logit, cons_logit, ema_logit, labels, labeled_mask_batch, weight, loss_weights, logit_distance_cost)
                 loss.backward()
                 optimizer.step()
-                global_step += 1
+                self.global_step += 1
                 update_ema_variables(
-                    self.model, self.ema_model, alpha, global_step)
+                    self.model, self.ema_model, alpha, self.global_step)
 
                 running_loss += loss.item() * model_input.size(0)
                 running_sl += sl.item() * model_input.size(0)
@@ -186,6 +171,7 @@ class MEBaseModel(BaseModel):
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
             epoch_rl = running_rl / self.num_train
+            self.start_epoch += 1
 
             print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} RL {epoch_rl: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
 

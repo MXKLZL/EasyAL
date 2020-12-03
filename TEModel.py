@@ -46,20 +46,8 @@ class TEModel(BaseModel):
 
         loss_weights = None
         if self.configs['weighted_loss']:
-            loss_weights = []
-            for class_name in self.dataset.classes:
-                class_id = self.dataset.class_name_map[class_name]
-                if class_id in self.class_counts:
-                    loss_weights.append(self.class_counts[class_id])
-                else:
-                    loss_weights.append(1e-4)
-
-            loss_weights = sum(
-                loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
-
-            if torch.cuda.is_available():
-                loss_weights = loss_weights.cuda()
-
+            loss_weights = self.get_loss_weights()
+            
         num_epochs = self.configs['epoch']
         self.model.train()
 
