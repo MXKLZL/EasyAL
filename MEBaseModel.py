@@ -14,7 +14,7 @@ class MEBaseModel(BaseModel):
         super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
-        self.ema_model = self.__get_model(model_name, ema=True, pretrain=configs['pretrained'])
+        self.ema_model = self.__get_model(model_name, ema=True)
         self.query_scheduler = query_scheduler
         self.use_weight = weight
 
