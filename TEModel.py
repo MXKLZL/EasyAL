@@ -9,8 +9,8 @@ from Evaluation import classification_evaluation
 
 
 class TEModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs, test_ds=None, weight=True, query_scheduler=None):
-        super().__init__(dataset, model_name, labeled_index, configs)
+    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, query_scheduler=None):
+        super().__init__(dataset, model_name, configs)
         self.data_loader = torch.utils.data.DataLoader(
             dataset, batch_size=configs['batch_size'])
         self.query_scheduler = query_scheduler
@@ -22,7 +22,7 @@ class TEModel(BaseModel):
             self.test_target = test_ds.target_list
 
     def update(self):
-        self.labeled_index = self.__get_labeled_index(self.dataset)
+        self.labeled_index = self.get_labeled_index(self.dataset)
         self.init_data_loaders()
         self.init_class_weights()
 

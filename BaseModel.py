@@ -9,11 +9,11 @@ from collections import Counter
 
 class BaseModel():
 
-    def __init__(self, dataset, model_name, labeled_index, configs, semi = False, teacher_target = None):
+    def __init__(self, dataset, model_name, configs, semi = False, teacher_target = None):
         self.configs = configs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.num_class = len(dataset.classes)
-        self.labeled_index = self.__get_labeled_index(dataset)
+        self.labeled_index = self.get_labeled_index(dataset)
         self.num_train = len(dataset)
         self.dataset = dataset
         self.semi = semi
@@ -24,13 +24,13 @@ class BaseModel():
         self.model_name = model_name
         self.model = self.__get_model(model_name)
         
-    def __get_labeled_index(self,dataset):
+    def get_labeled_index(self,dataset):
         target_list = dataset.target_list
         return [idx for idx,element in enumerate(target_list) if element is not None]
     
     def update(self):
         self.model = self.__get_model(self.model_name)
-        self.labeled_index = self.__get_labeled_index(self.dataset)
+        self.labeled_index = self.get_labeled_index(self.dataset)
         self.init_data_loaders()
         self.init_class_weights()
 
