@@ -10,8 +10,8 @@ from Evaluation import classification_evaluation
 
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs, test_ds=None, query_scheduler=None, weight=True):
-        super().__init__(dataset, model_name, labeled_index, configs)
+    def __init__(self, dataset, model_name, configs, test_ds=None, query_scheduler=None, weight=True):
+        super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema=True, pretrain=configs['pretrained'])

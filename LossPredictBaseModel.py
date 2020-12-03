@@ -10,8 +10,8 @@ from BaseModel import BaseModel
 
 
 class LossPredictBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, labeled_index, configs):
-        super().__init__(dataset, model_name, labeled_index, configs)
+    def __init__(self, dataset, model_name, configs):
+        super().__init__(dataset, model_name, configs)
         self.loss_model = self.__get_loss_model()
         #self.loss_feat_layers = configs['loss_feat_layers']
         self.loss_feat_layers = [14,15,16,17]
@@ -21,6 +21,13 @@ class LossPredictBaseModel(BaseModel):
         loss_model = loss_model.to(self.device)
         return loss_model
         
+    def update(self):
+        self.model = self.__get_model(self.model_name)
+        self.labeled_index = self.get_labeled_index(self.dataset)
+        self.loss_model = self.__get_loss_model()
+        self.init_data_loaders()
+        self.init_class_weights()
+
     
     def fit(self):
         self.dataset.set_mode(0)
@@ -32,18 +39,7 @@ class LossPredictBaseModel(BaseModel):
         optimizer_lm = torch.optim.Adam(filter(lambda p: p.requires_grad, self.loss_model.parameters()), lr=0.0001)
 
         if self.configs['weighted_loss']:
-            loss_weights = []
-            for class_name in self.dataset.classes:
-                class_id = self.dataset.class_name_map[class_name]
-                if class_id in self.class_counts:
-                    loss_weights.append(self.class_counts[class_id])
-                else:
-                    loss_weights.append(0)
-
-            loss_weights=sum(loss_weights)/torch.FloatTensor(loss_weights)/len(self.dataset.classes)
-
-            if torch.cuda.is_available():
-                loss_weights = loss_weights.cuda()
+            loss_weights = self.get_loss_weights()
             criterion = self.configs['loss_function'](weight=loss_weights, reduction='none')
         else:
             criterion = self.configs['loss_function'](reduction='none')

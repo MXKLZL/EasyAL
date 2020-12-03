@@ -9,7 +9,7 @@ from collections import Counter
 
 class BaseModel():
 
-    def __init__(self, dataset, model_name, labeled_index, configs, semi = False, teacher_target = None):
+    def __init__(self, dataset, model_name, configs, semi = False, teacher_target = None):
         self.configs = configs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.num_class = len(dataset.classes)
