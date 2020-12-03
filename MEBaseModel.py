@@ -10,12 +10,12 @@ from Evaluation import classification_evaluation
 
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, query_schedule, test_ds=None, weight=True, test_mode=False):
+    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode=False):
         super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema=True)
-        self.query_schedule = iter(query_schedule)
+        self.query_schedule = iter(configs['query_schedule'])
         self.use_weight = weight
         self.test_mode = test_mode
         if test_ds:

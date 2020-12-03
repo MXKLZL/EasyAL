@@ -9,17 +9,20 @@ from Evaluation import classification_evaluation
 
 
 class TEModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, query_scheduler=None):
+    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode = False):
         super().__init__(dataset, model_name, configs)
         self.data_loader = torch.utils.data.DataLoader(
             dataset, batch_size=configs['batch_size'])
-        self.query_scheduler = query_scheduler
         self.use_weight = weight
+        self.test_mode = test_mode
+        self.query_schedule = iter(configs['query_schedule'])
 
         if test_ds:
             self.testloader = torch.utils.data.DataLoader(
                 test_ds, batch_size=32)
             self.test_target = test_ds.target_list
+        
+        self.__init_model_set_up()
 
     def update(self):
         self.labeled_index = self.get_labeled_index(self.dataset)
@@ -30,28 +33,38 @@ class TEModel(BaseModel):
         _, pred = torch.max(self.predict(testloader), 1)
         return classification_evaluation(pred, test_target, criterion, 'weighted')
 
+    def __init_model_set_up(self):
+        self.optimizer = torch.optim.Adam(
+            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
+        self.Z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
+        self.z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
+        self.start_epoch = 0
+
     def fit(self):
         self.dataset.set_mode(0)
         batch_size = self.configs['batch_size']
         alpha = self.configs['alpha']
         ramp_length = self.configs['ramp_length']
-
-        optimizer = torch.optim.Adam(
-            filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
-
-        Z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
-        z = torch.zeros(self.num_train, self.num_class).float().to(self.device)
         outputs = torch.zeros(
             self.num_train, self.num_class).float().to(self.device)
 
         loss_weights = None
+        start_epoch = self.start_epoch
+
         if self.configs['weighted_loss']:
             loss_weights = self.get_loss_weights()
-            
+
         num_epochs = self.configs['epoch']
+
+        try:
+            # get next epoch to stop to wait for query
+            stop_epoch = next(self.query_schedule)
+        except StopIteration: 
+            stop_epoch  = num_epochs
+
         self.model.train()
 
-        for epoch in tqdm(range(num_epochs)):
+        for epoch in tqdm(range(start_epoch, stop_epoch)):
 
             labeled_mask = np.array(np.zeros(self.num_train), dtype=bool)
             labeled_mask[self.labeled_index] = True
@@ -73,11 +86,11 @@ class TEModel(BaseModel):
                 labels = labels.to(self.device)
                 inputs = inputs.to(self.device)
 
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 outputs_batch = self.model(inputs)
                 _, preds = torch.max(outputs_batch, 1)
 
-                z_batch = z[i*batch_size: (i+1)*batch_size].detach()
+                z_batch = self.z[i*batch_size: (i+1)*batch_size].detach()
                 labeled_mask_batch = labeled_mask[i *
                                                   batch_size: (i+1)*batch_size]
                 loss, ul, sl = total_loss(
@@ -87,26 +100,30 @@ class TEModel(BaseModel):
                         batch_size] = outputs_batch.detach().clone()
 
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
                 running_loss += loss.item() * inputs.size(0)
                 running_sl += sl.item() * inputs.size(0)
                 running_ul += ul.item() * inputs.size(0)
                 running_corrects_lb += torch.sum(
                     preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
-                running_corrects_ulb += torch.sum(
-                    preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
+                if self.test_mode:
+                    running_corrects_ulb += torch.sum(
+                        preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
 
-            Z = alpha * Z + (1. - alpha) * outputs
-            z = Z * (1. / (1. - alpha ** (epoch + 1)))
+            self.Z = alpha * self.Z + (1. - alpha) * outputs
+            self.z = self.Z * (1. / (1. - alpha ** (epoch + 1)))
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / len(self.labeled_index)
-            epoch_acc_ulb = running_corrects_ulb.double(
-            ) / (self.num_train - len(self.labeled_index))
+            if self.test_mode:
+                epoch_acc_ulb = running_corrects_ulb.double(
+                ) / (self.num_train - len(self.labeled_index))
+            else:
+                epoch_acc_ulb = -1
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
-
+            self.start_epoch += 1
             print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
             if self.testloader:
                 test_acc = self.pred_acc(self.testloader, self.test_target)
