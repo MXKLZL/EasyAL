@@ -14,12 +14,15 @@ from sklearn.cluster import KMeans
 from tqdm.notebook import tqdm
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from LossPredictBaseModel import *
 
 
 def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=False, distance_name='euclidean', standardize=True):
     start = time.time()
 
     if strategy == 'loss':
+        assert isinstance(model_class,LossPredictBaseModel), "Please pass a Loss Model"
+
         unlabel_index = model_class.get_unlabeled_index()
         unlabel_loss = get_uncertainty('loss', model_class)
         selected_index = unlabel_loss.argsort()[::-1][:label_per_round]
@@ -28,6 +31,8 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[selected_index]
 
     if strategy == 'random':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
+
         unlabel_index = model_class.get_unlabeled_index()
         np.random.shuffle(unlabel_index)
 
@@ -36,6 +41,8 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[:label_per_round]
 
     if strategy == 'uncertain':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
+
         unlabel_index = model_class.get_unlabeled_index()
         p, _ = torch.max(model_class.predict_unlabeled(), 1)
         selected_index = p.numpy().argsort()[:label_per_round]
@@ -45,6 +52,8 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[selected_index]
 
     if strategy == 'margin':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
+
         unlabel_index = model_class.get_unlabeled_index()
         p = model_class.predict_unlabeled()
         p = -np.sort(-p, axis=1)
@@ -58,6 +67,8 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[selected_index]
 
     if strategy == 'entropy':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
+
         unlabel_index = model_class.get_unlabeled_index()
         p = model_class.predict_unlabeled()
         entropy = (-p * torch.log(p)).sum(1)
@@ -69,6 +80,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[selected_index]
 
     if strategy == 'k_means':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_loss = None
         if add_uncertainty != False:
@@ -111,6 +123,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[centerlabels]
 
     if strategy == 'k_means++':
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_index = model_class.get_unlabeled_index()
         unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
@@ -173,23 +186,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, np.array(batch)
 
     if strategy == 'k_center_greedy':
-        # unlabel_index = model_class.get_unlabeled_index()
-        # unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
-        # label_index = model_class.labeled_index
-        # label_embedding = np.array(model_class.get_embedding(model_class.data_loader_labeled))
-
-        # # for each unlabeled dataset i, compute its distance with all labeled j,
-        # # and find the smallest distance
-        # min_dists = []
-        # for i in range(len(unlabel_embedding)):
-        #   l2_dists = np.linalg.norm(unlabel_embedding[i] - label_embedding, axis=1)
-        #   min_dists.append(l2_dists.min())
-
-        # selected_index = np.argsort(min_dists)[::-1][:label_per_round]
-        # # find the unlabeled dataset i with largest minimal distance
-        # end = time.time()
-        # duration = end - start
-        # return duration, unlabel_index[selected_index]
+        assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_index = model_class.get_unlabeled_index()
         unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
@@ -235,7 +232,8 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, np.array(batch)
 
     if strategy == 'confident_coreset':
-
+        assert isinstance(model_class,LossPredictBaseModel), "Please pass a Loss Model"
+        
         unlabel_index = model_class.get_unlabeled_index()
         unlabel_embedding = np.array(model_class.get_embedding_unlabeled())
         label_embedding = np.array(
