@@ -21,6 +21,11 @@ class TEModel(BaseModel):
                 test_ds, batch_size=32)
             self.test_target = test_ds.target_list
 
+    def update(self):
+        self.labeled_index = self.__get_labeled_index(self.dataset)
+        self.init_data_loaders()
+        self.init_class_weights()
+
     def pred_acc(self, testloader, test_target, criterion='f1'):
         _, pred = torch.max(self.predict(testloader), 1)
         return classification_evaluation(pred, test_target, criterion, 'weighted')
