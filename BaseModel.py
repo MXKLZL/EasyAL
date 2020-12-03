@@ -26,7 +26,7 @@ class BaseModel():
         
     def get_labeled_index(self,dataset):
         target_list = dataset.target_list
-        return [idx for idx,element in enumerate(target_list) if element is not None]
+        return [idx for idx,element in enumerate(target_list) if element != -1]
     
     def update(self):
         self.model = self.__get_model(self.model_name)
