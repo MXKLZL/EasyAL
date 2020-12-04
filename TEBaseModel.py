@@ -8,7 +8,7 @@ from BaseModel import BaseModel
 from Evaluation import classification_evaluation
 
 
-class TEModel(BaseModel):
+class TEBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode = False):
         super().__init__(dataset, model_name, configs)
         self.data_loader = torch.utils.data.DataLoader(
