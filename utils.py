@@ -20,6 +20,76 @@ import random
 import torch
 import itertools
 
+############## Code of integrating with label studio ##################
+import os
+
+def get_mapping(ds):
+
+    idx2base = []
+    base2idx = {}
+    for idx, path in enumerate(ds.path_list):
+        image_path = os.path.join(ds.root_dir, path)
+        base_name = os.path.basename(image_path)
+        idx2base.append(base_name)
+        base2idx[base_name] = idx
+    return idx2base, base2idx
+
+def read_from_oracle(completion_path, idx2base, base2idx):
+
+    res = []
+    for filename in os.listdir(completion_path):
+        if filename.endswith(".json"): 
+            json_path = os.path.join(completion_path, filename)
+        
+            with open(json_path) as f:
+                data = json.load(f)
+            choice = data['completions'][0]['result'][0]['value']['choices'][0]
+            base_name = os.path.basename(data['task_path'])
+
+            res.append((base2idx[base_name], choice))
+    return res
+
+def update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, class_name_map):
+
+    with open(json_path) as f:
+        data = json.load(f)
+
+    dataset_query = torch.utils.data.Subset(ds, query_indices)
+    data_loader_query = torch.utils.data.DataLoader(dataset_query, batch_size = 32)
+    preds = model.predict(data_loader_query)  # vector of probability
+
+    update_set = set()      # store all the task_path that need to set score to 1
+    base2label = {}         # store the mapping of those task_path to its predicted label
+
+    for idx, y in zip(query_indices, preds):
+        base_name = idx2base[idx]
+        update_set.add(base_name)
+        base2label[base_name] = class_name_map[np.argmax(y)]
+
+    for id_ in data:
+        id_base_name = os.path.basename(data[id_]['task_path'])
+        if id_base_name in update_set:
+            data[id_]['predictions'] = [{
+                'result': [{
+                    'from_name': 'choice',
+                    'to_name': 'image',
+                    'type': 'choices',
+                    'value': {
+                        'choices': [
+                            base2label[id_base_name]
+                        ]
+                    }
+                }],
+                'score' : 1
+            }]
+
+    json_object = json.dumps(data)
+
+    with open(task_json_path, 'w') as json_file:
+        json.dump(json_object, json_file)
+
+############## Code of integrating with label studio ##################
+
 gdrive_folder_path = "/content/gdrive/My Drive/SCHOOL/Capstone/visualization"
 
 def tsne_vis_each_iter(train_ds, Model, strategy_queries, opacity=None, models=None, tsne_precompute=None):
