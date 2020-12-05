@@ -138,36 +138,53 @@ models = {}
 # file = open("Fruits.obj",'rb')
 # object_file = pickle.load(file)
 # file.close()
-for strategy in strategies:
-  print(strategy)
-  # load model
-  with open(f"/content/gdrive/My Drive/SCHOOL/Capstone/model_{strategy}.pkl", 'rb') as handle:
-    Model = pickle.load(handle)
-    models[strategy] = Model
-  # load query_each_round
-  with open(f'/content/gdrive/My Drive/SCHOOL/Capstone/result_{strategy}.pkl', 'rb') as handle:
-    blob = pickle.load(handle)
-    query_each_round = blob[-1]
-    # print(query_each_round)
-  strategy_queries[strategy] = query_each_round
-  logger = logging.getLogger()
-  old_level = logger.level
-  logger.setLevel(100)
-  print("drawing for eye balls")
-  vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
-  logger.setLevel(old_level)
 
-  # visualize a single strategy's sample embedding at each iteration
-  print("drawing signle strategies sample emebdding at each iterations")
-  tsne_vis_each_strategy(train_ds, Model, query_each_round, strategy)
-  tsne_vis_each_strategy(train_ds, Model, query_each_round, strategy, opacity=True)  
+print("precompute embeddings")
+with open(f"/content/gdrive/My Drive/SCHOOL/Capstone/model_random.pkl", 'rb') as handle:
+    Model = pickle.load(handle)
+full_idx = np.arange(len(train_ds))
+dataset_query = torch.utils.data.Subset(train_ds, full_idx)
+data_loader_query = torch.utils.data.DataLoader(dataset_query, batch_size = 32)
+embeddings = Model.get_embedding(data_loader_query)
+tsne_embeddings = TSNE(n_components=2).fit_transform(embeddings.numpy())
+print("done")
+
+
+for strategy in strategies:
+    print(strategy)
+    # load model
+    try:
+        with open(f"/content/gdrive/My Drive/SCHOOL/Capstone/model_{strategy}.pkl", 'rb') as handle:
+            Model = pickle.load(handle)
+            models[strategy] = Model
+    except:
+        pass
+    # load query_each_round
+    with open(f'/content/gdrive/My Drive/SCHOOL/Capstone/result_{strategy}.pkl', 'rb') as handle:
+        blob = pickle.load(handle)
+        query_each_round = blob[-1]
+        # print(query_each_round)
+    strategy_queries[strategy] = query_each_round
+#   logger = logging.getLogger()
+#   old_level = logger.level
+#   logger.setLevel(100)
+#   print("drawing for eye balls")
+#   vis(query_each_round, train_ds, class_name_map, strategy, random_sample=10)
+#   logger.setLevel(old_level)
+
+    # visualize a single strategy's sample embedding at each iteration
+    print("drawing signle strategies sample emebdding at each iterations")
+    tsne_vis_each_strategy(train_ds, Model, query_each_round, strategy, tsne_precompute=tsne_embeddings)
+#   tsne_vis_each_strategy(train_ds, Model, query_each_round, strategy, opacity=True, tsne_precompute=tsne_embeddings)  
 
 # every strategy and iteration on one graph
 print("drawing every strategy and iteration on one graph")
-tsne_vis(train_ds, Model, strategy_queries, f"{strategy}")
-tsne_vis(train_ds, Model, strategy_queries, f"{strategy}_op", opacity=True)
+# tsne_vis(train_ds, Model, strategy_queries, f"{strategy}", tsne_precompute=tsne_embeddings)
+# tsne_vis(train_ds, Model, strategy_queries, f"{strategy}_op", opacity=True, tsne_precompute=tsne_embeddings)
+tsne_vis_all_seperated(train_ds, Model, strategy_queries, "all", iterationLegend=False, models=None, tsne_precompute=None, by=3)
+# tsne_vis_all_seperated(train_ds, Model, strategy_queries, "all", iterationLegend=False, opacity=True, models=None, tsne_precompute=None, by=4)
 
 # visualize every strategies's sample embedding for each iteration
 print("drawing every strategies's sample embedding for each iteration")
-tsne_vis_each_iter(train_ds, Model, strategy_queries, models=models)
-tsne_vis_each_iter(train_ds, Model, strategy_queries, opacity=True, models=models)
+tsne_vis_each_iter(train_ds, Model, strategy_queries, tsne_precompute=tsne_embeddings)
+# tsne_vis_each_iter(train_ds, Model, strategy_queries, opacity=True, models=models, tsne_precompute=tsne_embeddings)
