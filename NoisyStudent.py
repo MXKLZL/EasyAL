@@ -218,7 +218,7 @@ class NoisyStudent(BaseModel):
         self.teacher_list = self.teacher_list[1:]
 
         self.data_loader_unlabeled = torch.utils.data.DataLoader(self.dataset_unlabeled,
-                                                                 batch_size=self.configs['label_batch_size'])
+                                                                 batch_size=self.configs['labeled_batch_size'])
         self.init_class_weights()
 
     def test_train(self):
@@ -237,7 +237,7 @@ class NoisyStudent(BaseModel):
 
         unlabel_count = len(self.teacher_target[0])
         label_count = len(self.labeled_index)
-        rounds = math.ceil(label_count / self.configs['batch_size'])
+        rounds = math.ceil(label_count / self.configs['labeled_batch_size'])
         unlabel_batchsize = min(64, int(unlabel_count / rounds))
 
         unlabeled_index = self.get_unlabeled_index()

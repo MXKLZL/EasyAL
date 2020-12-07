@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from scipy.spatial import distance
 from BaseModel import BaseModel
-from torchvision import datasets, models
-import torch.nn.functional as F
+simport torch.nn.functional as F
 import torch.nn as nn
 import random
 import torch
