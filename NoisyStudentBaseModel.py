@@ -9,7 +9,7 @@ from tqdm.notebook import tqdm
 from BaseModel import BaseModel
 from Evaluation import classification_evaluation
 
-class NoisyStudent(BaseModel):
+class NoisyStudentBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs, test_ds=None, teacher_list = None):
         super().__init__(dataset, model_name, configs)
         self.teacher_list = teacher_list
