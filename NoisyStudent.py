@@ -27,7 +27,7 @@ class NoisyStudent(BaseModel):
         dataset_labeled = torch.utils.data.Subset(self.dataset, self.labeled_index)
         dataset_unlabeled = torch.utils.data.Subset(self.dataset, unlabeled_index)
 
-        self.dataset_unlabeled = dataset_labeled
+        self.dataset_unlabeled = dataset_unlabeled
         self.data_loader_labeled = torch.utils.data.DataLoader(dataset_labeled,
                                                                batch_size=self.configs['label_batch_size'])
         self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled,
