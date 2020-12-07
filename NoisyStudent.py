@@ -217,8 +217,8 @@ class NoisyStudent(BaseModel):
         self.model = self.__get_model(new_model)
         self.teacher_list = self.teacher_list[1:]
 
-        self.data_loader_unlabeled = torch.utils.data.DataLoader(self.dataset_unlabeled,
-                                                                 batch_size=self.configs['label_batch_size'])
+        #self.data_loader_unlabeled = torch.utils.data.DataLoader(self.dataset_unlabeled,
+                                                                 #batch_size=self.configs['label_batch_size'])
         self.init_class_weights()
 
     def test_train(self):
