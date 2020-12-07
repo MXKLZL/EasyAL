@@ -16,7 +16,6 @@ class BaseModel():
         self.labeled_index = self.get_labeled_index(dataset)
         self.num_train = len(dataset)
         self.dataset = dataset
-        self.teacher_target = teacher_target
         self.init_data_loaders()
         self.init_class_weights()
         

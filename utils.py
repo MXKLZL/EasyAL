@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from scipy.spatial import distance
 from BaseModel import BaseModel
-simport torch.nn.functional as F
+import torch.nn.functional as F
 import torch.nn as nn
 import random
 import torch
@@ -47,11 +47,18 @@ def read_from_oracle(completion_path, idx2base, base2idx):
             base_name = os.path.basename(data['task_path'])
 
             res.append((base2idx[base_name], choice))
-    return res
+    
+    index_list, target_list = zip(*res)
+
+    #Target_list is a list of raw class name, as in label studio, need to be transformed to numbers in dataset
+    return index_list, target_list
 
 def update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, class_name_map):
+    target_map = {}
+    for key in class_name_map:
+        target_map[class_name_map[key]] = key
 
-    with open(json_path) as f:
+    with open(task_json_path) as f:
         data = json.load(f)
 
     dataset_query = torch.utils.data.Subset(ds, query_indices)
@@ -64,8 +71,8 @@ def update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, cl
     for idx, y in zip(query_indices, preds):
         base_name = idx2base[idx]
         update_set.add(base_name)
-        base2label[base_name] = class_name_map[np.argmax(y)]
-
+        base2label[base_name] = target_map[np.argmax(y).item()]
+        
     for id_ in data:
         id_base_name = os.path.basename(data[id_]['task_path'])
         if id_base_name in update_set:
@@ -86,7 +93,7 @@ def update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, cl
     json_object = json.dumps(data)
 
     with open(task_json_path, 'w') as json_file:
-        json.dump(json_object, json_file)
+        json_file.write(json_object)
 
 ############## Code of integrating with label studio ##################
 
