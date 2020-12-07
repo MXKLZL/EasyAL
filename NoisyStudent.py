@@ -92,7 +92,7 @@ class NoisyStudent(BaseModel):
 
         return model
 
-    def fit(self, teacher_epoch = None):
+    def fit(self, train_epoch = None):
         self.dataset.set_mode(0)
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
@@ -114,8 +114,8 @@ class NoisyStudent(BaseModel):
         else:
             criterion = self.configs['loss_function']()
 
-        if teacher_epoch:
-            num_epochs = teacher_epoch
+        if train_epoch:
+            num_epochs = train_epoch
         else:
             num_epochs = self.configs['epoch']
 
@@ -221,8 +221,8 @@ class NoisyStudent(BaseModel):
                                                                  batch_size=self.configs['label_batch_size'])
         self.init_class_weights()
 
-    def train(self):
-        self.fit(self.configs['teacher_epoch'])
+    def test_train(self):
+        self.fit(self.configs['initial_epoch'])
         print('teacher evaluation-' + self.model_name + ':  ' + str(self.pred_acc(self.testloader, self.test_target)))
 
         while len(self.teacher_list) > 0:
