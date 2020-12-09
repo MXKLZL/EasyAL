@@ -1,6 +1,6 @@
 from BaseModel import *
 from MEBaseModel import *
-from TEModel import *
+from TEBaseModel import *
 from LossPredictBaseModel import *
 
 
