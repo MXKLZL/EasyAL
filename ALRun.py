@@ -47,14 +47,7 @@ class_name_map = {'BEANS': 22,
  'WATER': 1}
 
 
-
-#!nvidia-smi
-
-NUM_INITIAL_LAB = 200
-TEST_SET_RATIO = 0.2
-NUM_ROUND = 15
-NUM_LABEL_PER_ROUND = 100
-BATCH_SIZE = 32
+NUM_LABEL_PER_ROUND = 20
 DISTANCE = 'cosine'
 STANDARDIZE = True
 
@@ -81,7 +74,6 @@ configs = {'transforms': [transforms.Compose([
                                             ]
                                             )),
 ],
-          'batch_size': BATCH_SIZE,
           'num_ft_layers': 5,
           'loss_function': nn.CrossEntropyLoss,
           'num_class': 25,
@@ -89,27 +81,20 @@ configs = {'transforms': [transforms.Compose([
           #'epoch_loss':6,
           #'margin':1.0,
           #'lambda':1,
-          'pretrained':False
+          'pretrained':False,
+          'alpha' :0.6,
+          'ramp_length':2,
+          'epoch':3,
+          'labeled_batch_size':32,
+          
+
+
 
            }
 
-image_dir = 'images'
-
-def get_initial_label(num):
-    tmp = np.arange(len(train_ds))
-    np.random.seed(41)
-    np.random.shuffle(tmp)
-    return tmp[:num]
-
-
-configs['alpha'] = 0.6
-configs['ramp_length'] = 2
-configs['epoch'] = 1
-
-configs['labeled_batch_size'] = 8
 configs['unlabeled_batch_size'] = 24
 
-img_root = 'images'
+img_root = '/Users/zhangzhanming/Desktop/KPMG/local/images'
 target_list = []
 path_list = []
 
@@ -124,6 +109,7 @@ dataset= MultiTransformDataset(path_list, class_name_map=class_name_map,classes=
 idx2base, base2idx = get_mapping(dataset)
 
 response = ''
+model = get_model_class(dataset, 'mobilenet', configs, model_type = 'Basic')
 
 while response != 'end':
     print('Parsing annotations..')
@@ -132,10 +118,10 @@ while response != 'end':
     print(f'Got {len(target_list)} labeled samples' )
     dataset.update_target(index_list, target_list)
     print('Fitting model...')
-    model = get_model_class(dataset, 'mobilenet', configs)
+    model.update()
     model.fit()
-    print('Quering samples...')
-    query_time, queried_index = query('margin',model,20)
+    print(f'Quering {NUM_LABEL_PER_ROUND} samples...')
+    query_time, queried_index = query('margin',model,NUM_LABEL_PER_ROUND)
     update_json('/Users/zhangzhanming/Desktop/KPMG/local/my-project/tasks.json',queried_index,idx2base, base2idx, model, dataset, class_name_map)
-    input('Input "end" to stop or "next" to go to next round')
+    respones = input('Input "end" to stop or "next" to go to next round')
 
