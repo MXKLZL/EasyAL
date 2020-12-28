@@ -10,9 +10,9 @@ A modular active learning package for image classification with state-of-the-art
  - Dependency file [pyproject.toml](./pyproject.toml)
 
 # Installation
-- Install label studio with command $pip install label-studio
-- Run command line $cd [the path you pull EasyAL package folder to]/EasyAL 
-- Run command line $poetry shell and then $poetry install to install all dependencies for EasyAL
+- Install label studio with command `$pip install label-studio`
+- Run command line `$cd [the path you pull EasyAL package folder to]/EasyAL`
+- Run command line `$poetry shell` and then `$poetry install` to install all dependencies for EasyAL
 
 # Getting Started
 Guide to create label studio work folder and start active learning loop:
