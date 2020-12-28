@@ -1,5 +1,11 @@
 ![img](./logo.png =250x)
 
+
+<p align="center">
+  <img src="logo.png.png" width="256" height="455">
+
+</p>
+
 # EasyAL
 A modular active learning package for image classification with state of the art active learning strategy
 
