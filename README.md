@@ -25,7 +25,7 @@ Guide to create label studio work folder and start active learning loop:
 
    ![img](./example/label_studio_work_folder.png)
 
-- Run label-studio start ./[your label studio project name] and your browser with launch automatically with the label studio interface
+- Run `label-studio start ./[your label studio project name]` and your browser with launch automatically with the label studio interface
 - Choose the labeling button on the top of the interface to begin labeling
 - After your first round of labeling, change environment variable  "sampling": "sequential" in `./[your label studio project name]/.config.json` to "sampling": "prediction-score-max" to activate active learning mode for future rounds
 
