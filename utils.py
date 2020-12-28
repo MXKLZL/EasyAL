@@ -97,7 +97,6 @@ def update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, cl
 
 ############## Code of integrating with label studio ##################
 
-gdrive_folder_path = "/content/gdrive/My Drive/SCHOOL/Capstone/visualization"
 
 def tsne_vis_each_iter(train_ds, Model, strategy_queries, opacity=None, models=None, tsne_precompute=None):
     num_iter = len(list(strategy_queries.values())[0])
@@ -134,7 +133,7 @@ def tsne_vis_all_seperated(train_ds, Model, strategy_queries, name, iterationLeg
         tsne_vis(train_ds, Model, strategy_queries_iter, file_name, opacity=opacity, models=models, tsne_precompute=tsne_precompute)
         curr_iter += by
 
-def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False, opacity=None, models=None, tsne_precompute=None):
+def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False, opacity=None, models=None, tsne_precompute=None,save_path='.'):
 
     if tsne_precompute is not None:
         tsne = tsne_precompute
@@ -192,10 +191,10 @@ def tsne_vis(train_ds, Model, strategy_queries, name, iterationLegend=False, opa
     #     for idx in range(num_iter):
     #         h.append(mpatches.Patch(color=color_map[idx], label=s))
     # plt.savefig(f"visualization/{name}.jpg")
-    plt.savefig(f"{gdrive_folder_path}/{name}.jpg")
+    plt.savefig(f"{save_path}/{name}.jpg")
 
 
-def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10):
+def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10,save_path='.'):
     num_rounds = len(query_each_round)
     query_round_by_class = {}
     for k, v in class_name_map.items():
@@ -237,4 +236,4 @@ def vis(query_each_round, dataset, class_name_map, strategy, random_sample=10):
         plt.gca().xaxis.set_ticks_position('none') 
         plt.gca().yaxis.set_ticks_position('none') 
         # plt.savefig(f"visualization/{strategy}_class_{k}.jpg", bbox_inches='tight')
-        plt.savefig(f"{gdrive_folder_path}/{strategy}_class_{k}.jpg", bbox_inches='tight')
+        plt.savefig(f"{save_path}/{strategy}_class_{k}.jpg", bbox_inches='tight')
