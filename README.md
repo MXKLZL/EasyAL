@@ -1,8 +1,5 @@
-![img](./logo.png =250x)
-
-
 <p align="center">
-  <img src="logo.png" width="256" height="455">
+  <img src="logo.png" width="400" height="400">
 
 </p>
 
