@@ -1,0 +1,27 @@
+{
+  "completions": [
+    {
+      "created_at": 1609128351,
+      "id": 1,
+      "lead_time": 14.065,
+      "result": [
+        {
+          "from_name": "choice",
+          "id": "m5Tcw7yDgw",
+          "to_name": "image",
+          "type": "choices",
+          "value": {
+            "choices": [
+              "SUGAR"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "data": {
+    "image": "/data/SUGAR0092.png?d=%2FUsers%2Fyichizhang%2FDesktop%2Fimages%2FSUGAR"
+  },
+  "id": 0,
+  "task_path": "/Users/yichizhang/Desktop/images/SUGAR/SUGAR0092.png"
+}

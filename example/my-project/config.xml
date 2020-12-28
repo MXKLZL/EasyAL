@@ -1,0 +1,31 @@
+<View>
+  <Image name="image" value="$image"/>
+  <Choices name="choice" toName="image" showInLine="true">
+    <Choice value="BEANS" />
+    <Choice value="CAKE" />
+    <Choice value="CANDY" />
+    <Choice value="CEREAL" />
+    <Choice value="CHIPS" />
+    <Choice value="CHOCOLATE" />
+    <Choice value="COFFEE" />
+    <Choice value="CORN" />
+    <Choice value="FISH" />
+    <Choice value="FLOUR" />
+    <Choice value="HONEY" />
+    <Choice value="JAM" />
+    <Choice value="JUICE" />
+    <Choice value="MILK" />
+    <Choice value="NUTS" />
+    <Choice value="OIL" />
+    <Choice value="PASTA" />
+    <Choice value="RICE" />
+    <Choice value="SODA" />
+    <Choice value="SPICES" />
+    <Choice value="SUGAR" />
+    <Choice value="TEA" />
+    <Choice value="TOMATO_SAUCE" />
+    <Choice value="VINEGAR" />
+    <Choice value="WATER" />
+
+  </Choices>
+</View>

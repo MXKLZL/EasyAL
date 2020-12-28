@@ -1,7 +1,9 @@
+![img](./logo.png =300*300)
+
 # EasyAL
 A modular active learning package for image classification with state of the art active learning strategy
 
-# Requirement
+# Requirements
  - [Dependencies](./pyproject.toml)
 
 # Installation
