@@ -5,7 +5,7 @@ from LossPredictBaseModel import *
 from NoisyStudentBaseModel import *
 
 
-def get_model_class(dataset,model_name,train_configs,model_type = 'Basic',test_ds=None):
+def get_model(dataset,model_name,train_configs,model_type = 'Basic',test_ds=None):
     if model_type == 'Basic':
         return BaseModel(dataset,model_name,train_configs)
     elif model_type == 'MeanTeacher':
