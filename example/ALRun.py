@@ -134,7 +134,7 @@ while response != 'end':
     # fit model
     model.fit()
 
-    # query image index for next round's labeling
+    # query image index for next round's labeling, here we used strategy, 'margin', stands for margin sampling
     print(f'Quering {NUM_LABEL_PER_ROUND} samples...')
     query_time, queried_index = query('margin',model,NUM_LABEL_PER_ROUND)
 
