@@ -1,4 +1,4 @@
-![img](./logo.png)
+![img](./logo.png =250x)
 
 # EasyAL
 A modular active learning package for image classification with state of the art active learning strategy
