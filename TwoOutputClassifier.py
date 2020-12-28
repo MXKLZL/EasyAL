@@ -1,5 +1,11 @@
 import torch.nn as nn
 
+'''
+Got inspiration from the work of CuriousAI, the original author of Mean Teacher
+Github Link: https://github.com/CuriousAI/mean-teacher
+Paper: https://arxiv.org/abs/1703.01780
+'''
+
 class TwoOutputClassifier(nn.Module):
     def __init__(self, in_features, num_classes):
         super(TwoOutputClassifier, self).__init__()

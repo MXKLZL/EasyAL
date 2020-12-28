@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F 
 
+"""
+Got inspiration from the original paper, 'Learning Loss for Active Learning'
+http://arxiv.org/abs/1905.03677
+"""
 
 class LossModel(nn.Module):
     def __init__(self,device,num_filters=[160,160,160,320], out_dim=128):

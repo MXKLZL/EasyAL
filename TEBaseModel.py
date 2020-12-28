@@ -7,6 +7,13 @@ from tqdm.notebook import tqdm
 from BaseModel import BaseModel
 from Evaluation import classification_evaluation
 
+'''
+Got inspiration from the Johan Ferret's pytorch implementation of Temporal Ensembling
+Github Link: https://github.com/ferretj/temporal-ensembling
+
+and the original paper of Temporal Ensembling, 'Temporal Ensembling for Semi-Supervised Learning'
+Paper: https://arxiv.org/abs/1610.02242
+'''
 
 class TEBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode = False):
