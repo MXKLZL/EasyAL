@@ -9,6 +9,14 @@ from tqdm.notebook import tqdm
 from BaseModel import BaseModel
 from Evaluation import classification_evaluation
 
+'''
+Got inspiration from the ChanLIM's pytorch implementation of Noisy Student
+Github Link: https://github.com/ChanLIM/noisystudent_pytorch
+
+and the original paper of Noisy Student, 'Self-training with Noisy Student improves ImageNet classification'
+Paper: https://arxiv.org/abs/1911.04252
+'''
+
 class NoisyStudentBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs, test_ds=None, teacher_list = None):
         super().__init__(dataset, model_name, configs)

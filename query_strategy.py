@@ -116,6 +116,10 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[centerlabels]
 
     if strategy == 'k_means++':
+        '''
+        Got inspiration from the paper, 'Scalable Active Learning for Object Detection'
+        Paper: https://arxiv.org/pdf/2004.04699v1.pdf
+        '''
         assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_index = model_class.get_unlabeled_index()
@@ -230,7 +234,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
 
     if strategy == 'confident_coreset':
         '''
-        Got inspiration from the original paper of Confident Coreset, 'Confident Coreset for Active Learning in Medical Image Analysis
+        Got inspiration from the original paper of Confident Coreset, 'Confident Coreset for Active Learning in Medical Image Analysis'
 '
         Paper: https://arxiv.org/abs/2004.02200
         '''
