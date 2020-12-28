@@ -179,6 +179,10 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, np.array(batch)
 
     if strategy == 'k_center_greedy':
+        '''
+        Got inspiration from the original paper of Coreset, 'Active Learning for Convolutional Neural Networks: A Core-Set Approach'
+        Paper: http://arxiv.org/abs/1708.00489
+        '''
         assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_index = model_class.get_unlabeled_index()
@@ -225,6 +229,12 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, np.array(batch)
 
     if strategy == 'confident_coreset':
+        '''
+        Got inspiration from the original paper of Confident Coreset, 'Confident Coreset for Active Learning in Medical Image Analysis
+'
+        Paper: https://arxiv.org/abs/2004.02200
+        '''
+
         assert isinstance(model_class,LossPredictBaseModel), "Please pass a Loss Model"
         
         unlabel_index = model_class.get_unlabeled_index()

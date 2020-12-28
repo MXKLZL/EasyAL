@@ -8,6 +8,10 @@ from collections import Counter
 from LossModel import LossModel
 from BaseModel import BaseModel
 
+"""
+Got inspiration from the original paper, 'Learning Loss for Active Learning'
+http://arxiv.org/abs/1905.03677
+"""
 
 class LossPredictBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs):

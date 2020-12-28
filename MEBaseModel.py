@@ -8,6 +8,11 @@ from BaseModel import BaseModel
 from TwoOutputClassifier import TwoOutputClassifier
 from Evaluation import classification_evaluation
 
+'''
+Got inspiration from the work of CuriousAI, the original author of Mean Teacher
+Github Link: https://github.com/CuriousAI/mean-teacher
+Paper: https://arxiv.org/abs/1703.01780
+'''
 
 class MEBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode=False):
