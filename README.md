@@ -7,7 +7,7 @@
 A modular active learning package for image classification with state-of-the-art active learning strategies
 
 # Requirements
- - [Dependencies](./pyproject.toml)
+ - Dependency file [pyproject.toml](./pyproject.toml)
 
 # Installation
 - Install label studio with command $pip install label-studio
