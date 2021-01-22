@@ -100,10 +100,9 @@ class NoisyStudentBaseModel(BaseModel):
 
         return model
 
-    def fit(self, train_epoch = None):
+    def fit(self):
         self.dataset.set_mode(0)
-        if train_epoch is None:
-            train_epoch = self.student_epoch[0]
+        train_epoch = self.student_epoch[0]
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
 
