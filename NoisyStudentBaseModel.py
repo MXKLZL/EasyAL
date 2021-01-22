@@ -102,6 +102,8 @@ class NoisyStudentBaseModel(BaseModel):
 
     def fit(self, train_epoch = None):
         self.dataset.set_mode(0)
+        if train_epoch is None:
+            train_epoch = self.student_epoch[0]
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=0.0001)
 
@@ -122,15 +124,9 @@ class NoisyStudentBaseModel(BaseModel):
         else:
             criterion = self.configs['loss_function']()
 
-        if train_epoch:
-            num_epochs = train_epoch
-        else:
-            num_epochs = self.configs['epoch']
-
         self.model.train()
 
-        for epoch in tqdm(range(num_epochs)):
-            #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        for epoch in tqdm(range(train_epoch)):
             #print('-' * 10)
 
             running_loss = 0.0
@@ -156,13 +152,13 @@ class NoisyStudentBaseModel(BaseModel):
             else:
                 targets = iter(self.teacher_target[1])
 
-                data_loader_unlabeled = self.get_new_unlabeled_loader()
+                data_loader_unlabeled = self.__get_new_unlabeled_loader()
 
                 for inputs, labels in self.data_loader_labeled:
                     try:
                         input_u, label_u = next(data_loader_unlabeled)
                     except StopIteration:
-                        data_loader_unlabeled = self.get_new_unlabeled_loader()
+                        data_loader_unlabeled = self.__get_new_unlabeled_loader()
                         input_u, label_u = next(data_loader_unlabeled)
                         targets = iter(self.teacher_target[1])
 
@@ -196,7 +192,7 @@ class NoisyStudentBaseModel(BaseModel):
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
 
-    def filter(self):
+    def __filter(self):
         probabilities, labels = torch.max(self.predict_unlabeled(), 1)
         probabilities, labels = np.array(probabilities), np.array(labels)
 
@@ -213,7 +209,7 @@ class NoisyStudentBaseModel(BaseModel):
         self.labeled_index = self.get_labeled_index(self.dataset)
         self.init_data_loaders()
 
-        self.filter()
+        self.__filter()
 
         torch.cuda.empty_cache()
         gc.collect()
@@ -224,24 +220,12 @@ class NoisyStudentBaseModel(BaseModel):
         self.model_name = new_model
         self.model = self.__get_model(new_model)
         self.teacher_list = self.teacher_list[1:]
-
+        self.student_epoch = self.student_epoch[1:]
         self.data_loader_unlabeled = torch.utils.data.DataLoader(self.dataset_unlabeled,
                                                                  batch_size=self.configs['labeled_batch_size'])
         self.init_class_weights()
 
-    def test_train(self):
-        self.fit(self.configs['initial_epoch'])
-        print('teacher evaluation-' + self.model_name + ':  ' + str(self.pred_acc(self.testloader, self.test_target)))
-
-        while len(self.teacher_list) > 0:
-            self.update()
-
-            new_epoch = self.student_epoch[0]
-            self.fit(new_epoch)
-            self.student_epoch = self.student_epoch[1:]
-            print('student evaluation-' + self.model_name + ':  ' + str(self.pred_acc(self.testloader, self.test_target)))
-
-    def get_new_unlabeled_loader(self):
+    def __get_new_unlabeled_loader(self):
 
         unlabel_count = len(self.teacher_target[0])
         label_count = len(self.labeled_index)
