@@ -115,7 +115,7 @@ class LossPredictBaseModel(BaseModel):
         
         return hook_handles
 
-    def predict_loss(self, test_data_loader):
+    def predict_loss(self, data_loader):
         # predict loss for given samples
         self.dataset.set_mode(1)
         self.model.eval()
@@ -127,7 +127,7 @@ class LossPredictBaseModel(BaseModel):
         predicted_loss = None
 
         with torch.no_grad():
-            for inputs, labels in test_data_loader:
+            for inputs, labels in data_loader:
                 inputs = inputs.to(self.device)
                 preds =  self.model(inputs)
                 features = []
