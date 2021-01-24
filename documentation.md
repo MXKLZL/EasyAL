@@ -14,7 +14,7 @@ Arguments:
 
 ​    class_name_map(dictionary): mapping between targets and classes
 
-​    transform (list of transformation): list of callable transform object to be applie on a sample, using its index as the mode for the transformation
+​    transform (list of transformation): list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation)
 
 
 
@@ -64,7 +64,59 @@ function fit()
 
 
 
-predict
+function predict(data_loader)
+
+​	predict labels (in probabilities) for given data loader
+
+Parameters:
+
+​	data_loader(pyTorch Dataloader): data loader of images to predict label
+
+Returns:
+
+​	A tensor of probabilities of predicted classes for each image
+
+
+
+function predict_unlabeled()
+
+​	predict labels (in probabilities) for current unlabeled images
+
+Returns:
+
+​	A tensor of probabilities of predicted classes for each image
+
+
+
+function get_embedding(data_loader)
+
+​	get embeddings for each image from a given data loader based on current model. The embedding is the intermediate output of the last layer before fully connected output layer
+
+Parameters:
+
+​	data_loader(pyTorch Dataloader): data loader of images to get embedding
+
+Returns:
+
+​	A tensor of embeddings for each image
+
+
+
+function get_embedding_unlabeled()
+
+​	get embeddings for each unlabeled loader based on current model.
+
+Returns:
+
+​	A tensor of embeddings for each image
+
+
+
+​	
+
+​	
+
+​	
 
  
 
