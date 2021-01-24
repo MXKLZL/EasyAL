@@ -15,14 +15,13 @@ Paper: https://arxiv.org/abs/1703.01780
 '''
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode=False):
+    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True):
         super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema=True)
         self.query_schedule = iter(configs['query_schedule'])
         self.use_weight = weight
-        self.test_mode = test_mode
         if test_ds:
             self.testloader = torch.utils.data.DataLoader(
                 test_ds, batch_size=32)
@@ -169,23 +168,17 @@ class MEBaseModel(BaseModel):
                 running_rl += rl.item() * model_input.size(0)
                 running_corrects_lb += torch.sum(
                     preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
-                if self.test_mode:
-                    running_corrects_ulb += torch.sum(
-                        preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
+
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / label_count
-            if self.test_mode:
-                epoch_acc_ulb = running_corrects_ulb.double(
-                ) / (self.num_train - len(self.labeled_index))
-            else:
-                epoch_acc_ulb = -1
+
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
             epoch_rl = running_rl / self.num_train
             self.start_epoch += 1
 
-            print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} RL {epoch_rl: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
+            print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} RL {epoch_rl: .4f} Acc Lb {epoch_acc_lb: .4f}')
 
             if self.testloader:
                 test_acc = self.pred_acc(self.testloader, self.test_target)
