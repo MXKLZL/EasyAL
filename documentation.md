@@ -1,3 +1,7 @@
+#### **MultiTransformDataset**
+
+
+
 *class* **MultiTransformDataset**(path_list, target_list=None, classes=None, class_name_map=None, root_dir='', transform=None)
 
 ​	A pytorch dataset subclass that can alternate the type of image transformation by setting the mode. For instance, in active learning tasks, two types of image transformation are needed for a same dataset object. The reason for it is that different transformations are needed for labeled images and unlabeled images, and unlabeled images might get labeled during executing the task. By setting the mode of transformation, you can use intended image transformation type as needed.
@@ -27,6 +31,8 @@ function set_mode(mode)
 ​		mode(integer): index for the list of transformation
 
 
+
+#### BaseModel 
 
 *class* **BaseModel**(dataset, model_name, configs)
 
@@ -112,19 +118,33 @@ Returns:
 
 
 
-​	
+#### LossPredictBaseModel	
 
-​	
+*class* LossPredictBaseModel(dataset, model_name, configs)
 
-​	
+​	The subclass of BaseModel to be used for loss sampling and confident coreset strategies.
 
- 
+Arguments:
+
+​	model_name(string): name of the image classifier you want to use. Can be chosen from ['resnet18', 'resnet34', 'resnet50', 'mobilenet']
+
+​	configs(dictionary): configuration for the current active learning task. See configruation guide for details.
+
+
+
+function predict_loss(data_loader)
+
+​	get predicted classification loss for each image of a given data loader
+
+Returns:
+
+​	A tensor of predicted loss
 
 
 
 
 
-Configuration Guide:
+### Configuration Guide
 
 Different configuration is needed for different model class you are using.
 
@@ -137,6 +157,12 @@ If you are using BaseModel class, you need to specify the following configuraito
 - loss_function(Pytorch Loss Function<span style="color:red"> *Class*</span>): The loss function <span style="color:red">*class*</span> for training
 - labeled_batch_size(Integer): Size of mini-batch for computing the gradient on labeled images
 - unlabeled_batch_size(Integer): Size of mini-batch for computing the gradient on unlabeled images
+
+If you are using LossPredictBaseModel class, you need further specify the following configurations.
+
+- epoch_loss(Integer): During the training, beyond this number of epoch, the loss of the loss predicting model will not be used for updating the gradient of the classifier
+- margin(Float): The margin used in the pair comparison loss(the crafted loss for the loss predicting model)
+- lambda(Float): Weight for the loss predicting model loss in training
 
 
 
