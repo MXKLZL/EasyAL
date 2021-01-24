@@ -116,6 +116,10 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         return duration, unlabel_index[centerlabels]
 
     if strategy == 'k_means++':
+        '''
+        Got inspiration from the paper, 'Scalable Active Learning for Object Detection'
+        Paper: https://arxiv.org/pdf/2004.04699v1.pdf
+        '''
         assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_index = model_class.get_unlabeled_index()
@@ -230,7 +234,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
 
     if strategy == 'confident_coreset':
         '''
-        Got inspiration from the original paper of Confident Coreset, 'Confident Coreset for Active Learning in Medical Image Analysis
+        Got inspiration from the original paper of Confident Coreset, 'Confident Coreset for Active Learning in Medical Image Analysis'
 '
         Paper: https://arxiv.org/abs/2004.02200
         '''
@@ -326,30 +330,3 @@ def get_distance(unlabel, label_embedding, strategy):
     elif strategy == 'euclidean':
         return np.linalg.norm(unlabel - label_embedding, axis=1)
 
-class QueryScheduler():
-    def __init__(self,strategy, label_per_round, total_queries, total_epochs, write_res_fname = None, query_epochs=None, alpha=0.5, add_uncertainty=False, distance_name='euclidean', standardize=True):
-        self.strategy = strategy
-        self.label_per_round = label_per_round
-        self.total_queries = total_epochs
-        if query_epochs is None:
-            query_epochs = [total_epochs//(total_queries+1)*(i+1) for i in range(total_queries)]
-        self.query_epochs = query_epochs
-        self.alpha = alpha
-        self.add_uncertainty = add_uncertainty
-        self.distance_name = distance_name
-        self.standardize = standardize
-        self.write_res_fname = write_res_fname
-        
-
-    def __call__(self, epoch, model_class):
-        queried_batch = None
-
-        if epoch in self.query_epochs:
-            duration, queried_batch = query(self.strategy, model_class, self.label_per_round, self.alpha, self.add_uncertainty, self.distance_name, self.standardize)
-            print(f'Spent {duration} time at epoch {epoch}')
-
-            if self.write_res_fname is not None:
-                with open(self.write_res_fname, 'w+') as fh:
-                    fh.write('Epoch:' +str(epoch)+' ['+','.join([str(x) for x in queried_batch])+']\n')
-        
-        return queried_batch

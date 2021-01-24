@@ -159,13 +159,13 @@ class BaseModel():
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format('Train',epoch_loss, epoch_acc.item()))
 
-    def predict(self, test_data_loader):
+    def predict(self, data_loader):
         cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
         self.model.eval()
         preds = None
         with torch.no_grad():
-            for inputs, labels in test_data_loader:
+            for inputs, labels in data_loader:
                 
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
@@ -187,7 +187,7 @@ class BaseModel():
     def predict_unlabeled(self):
         return self.predict(self.data_loader_unlabeled)
 
-    def get_embedding(self, test_data_loader):
+    def get_embedding(self, data_loader):
         cur_mode = self.dataset.mode
         self.dataset.set_mode(1)
 
@@ -201,7 +201,7 @@ class BaseModel():
         embeddings = None
         self.model.eval()
         with torch.no_grad():
-            for inputs, labels in test_data_loader:
+            for inputs, labels in data_loader:
 
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
