@@ -32,6 +32,18 @@ function set_mode(mode)
 
 
 
+function update_target(index, new_target)
+
+​	Update dataset with new labels(in integer form)
+
+Parameters:
+
+​	index(List of Integers): index of samples to update targets
+
+​	new_target(List of Integers):	labels of newly annotated samples
+
+
+
 #### BaseModel 
 
 *class* **BaseModel**(dataset, model_name, configs)
@@ -142,6 +154,56 @@ Returns:
 
 
 
+function  predict_unlabeled_loss()
+
+​	get predicted classification loss for each unlabeled image
+
+Returns:
+
+​	A tensor of predicted loss
+
+
+
+#### MEBaseModel
+
+*class* **MEBaseModel**(dataset, model_name, configs, test_ds=None, weight=True)
+
+​	The subclass of BaseModel to be used for Mean Teacher semi-supervised learning model. This semi-supervised learning model can be combined with active learning query strategies, excluding loss sampling and confident coreset.
+
+Arguments:
+
+​	model_name(string): name of the image classifier you want to use. Can be chosen from ['resnet18', 'resnet34', 'resnet50', 'mobilenet']
+
+​	configs(dictionary): configuration for the current active learning task. See configruation guide for details.
+
+​	test_ds(pyTorch Dataset): Dataset object of testset. Default None. If it's 'none', test accuracy will not be calculated.
+
+​	use_weight(Boolean): If training should use loss from unlabeled samples. Default True. If False, model training will be purely supervised.
+
+
+
+function pred_acc(testloader, test_target, criterion='f1')
+
+​	Calculate test accuracy on given test set
+
+Parameters:
+
+​	testloader(pyTorch Dataloader): Dataloader of test set to calculate accuracy on
+
+​    test_target(list of Integers): List of targets correponding to given test set
+
+​	criterion(String): Type of evaluation metric to compute. Can be chosen from ['precision','recall','f1'] Default 'f1'
+
+Returns:
+
+​	Evaluation metric calculated on predictions from given test set
+
+
+
+
+
+
+
 
 
 ### Configuration Guide
@@ -163,6 +225,14 @@ If you are using LossPredictBaseModel class, you need further specify the follow
 - epoch_loss(Integer): During the training, beyond this number of epoch, the loss of the loss predicting model will not be used for updating the gradient of the classifier
 - margin(Float): The margin used in the pair comparison loss(the crafted loss for the loss predicting model)
 - lambda(Float): Weight for the loss predicting model loss in training
+
+If you are using MEBaseModel class, you need further specify the following configurations.
+
+- query_schedule(list of Integers): If active learning query is combined during training, this item must be provided. Query_schedule is a list of epochs(< configs['epoch']) where the training will pause to wait for new labels input and updating the model
+- alpha(Float): Alpha parameter in the exponential moving average
+- ramp_length(Integer):The length of the epochs that weight of loss from unlabeled samples ramps up
+
+
 
 
 
