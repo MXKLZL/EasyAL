@@ -18,7 +18,7 @@ Arguments:
 
 ​    class_name_map(dictionary): mapping between targets and classes
 
-​    transform (list of transformation): list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation)
+​    transform (list of pyTorch data transformation object): list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation)
 
 
 
@@ -41,6 +41,24 @@ Parameters:
 ​	index(List of Integers): index of samples to update targets
 
 ​	new_target(List of Integers):	labels of newly annotated samples
+
+
+
+*class* **TransformTwice**(transform)
+
+​	A wrapper for pyTorch transform object so that a single image to pyTorch dataset can generate two  transformed image with same transformation process. These two transformed images could be different due to stochastic data augmentation. This kind of transformation is required for Mean Teacher model.
+
+Arguments:
+
+​	transform(pyTorch data transformation object): Callable transform object to be applie on a sample twice
+
+
+
+*callable function* \__call__()
+
+Returns
+
+​	Two images generated with the transform process within on the input image	
 
 
 
@@ -197,6 +215,9 @@ Parameters:
 Returns:
 
 ​	Evaluation metric calculated on predictions from given test set
+
+
+
 #### TEBaseModel 
 
 *class* **TEBaseModel**(dataset, model_name, configs, test_ds = None, weight = True, test_mode = False )
@@ -349,12 +370,12 @@ If you are using **NoisyStudentBaseModel** class, you need to specify the follow
 
 
 
-#### Transformation Guide
+#### Data Transformation Guide
 
 When you create **MultiTransformDataset()** object, you need pass a list transformation to deal with the different scenarios during the active learning loop.
 
-- transforms (list of transformation): list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation).
-
+- Parameter transforms (list of transformation) is list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation).
+- If `MEBaseModel` is used, `TransformTwice` object need to be appended to the `tranformations` list as the last item. The input for TransformTwice wrapper should be the transformation used for training, that is, identical to the first transformation in the list.
 -  For the NoisyStudent Algorithm, we recommend to add transformation of Brightness, Contrast, Sharpness during the training step to help student model outperform their teacher. For more information, refer to [Self-training with Noisy Student improves ImageNet classification](https://arxiv.org/pdf/1911.04252.pdf)
 
   
