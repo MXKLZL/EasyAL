@@ -15,13 +15,13 @@ Paper: https://arxiv.org/abs/1703.01780
 '''
 
 class MEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True):
+    def __init__(self, dataset, model_name, configs, test_ds=None, use_weight=True):
         super().__init__(dataset, model_name, configs)
 
         self.model = self.__get_model(model_name)
         self.ema_model = self.__get_model(model_name, ema=True)
         self.query_schedule = iter(configs['query_schedule'])
-        self.use_weight = weight
+        self.use_weight = use_weight
         if test_ds:
             self.testloader = torch.utils.data.DataLoader(
                 test_ds, batch_size=32)
