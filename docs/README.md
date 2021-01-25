@@ -24,7 +24,7 @@ Guide to create label studio work folder and start active learning loop:
 
 - A folder with the following structure will appear in your current path 
 
-   ![img](./example/label_studio_work_folder.png)
+   ![img](../example/label_studio_work_folder.png)
 
 - Run `label-studio start ./[your label studio project name]` and your browser with launch automatically with the label studio interface
 
