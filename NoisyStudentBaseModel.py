@@ -37,9 +37,6 @@ class NoisyStudentBaseModel(BaseModel):
         self.data_loader_unlabeled = torch.utils.data.DataLoader(dataset_unlabeled,
                                                                  batch_size=self.configs['label_batch_size'])
 
-    def pred_acc(self, testloader, test_target, criterion='f1'):
-        _, pred = torch.max(self.predict(testloader), 1)
-        return classification_evaluation(pred, test_target, criterion, 'weighted')
 
     def __get_model(self, model_name):
 

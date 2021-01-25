@@ -238,6 +238,24 @@ Arguments:
 
 
 
+function pred_acc(testloader, test_target, criterion='f1')
+
+​	Calculate test accuracy on given test set
+
+Parameters:
+
+​	testloader(pyTorch Dataloader): Dataloader of test set to calculate accuracy on
+
+​    test_target(list of Integers): List of targets correponding to given test set
+
+​	criterion(String): Type of evaluation metric to compute. Can be chosen from ['precision','recall','f1'] Default 'f1'
+
+Returns:
+
+​	Evaluation metric calculated on predictions from given test set
+
+
+
 #### NoisyStudentBaseModel
 
 *class* **NoisyStudentBaseModel**(dataset, model_name, configs, student_list = None)
@@ -254,13 +272,15 @@ Arguments:
 
 
 
+
+
 #### Query Strategy
 
 function query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=False, distance_name='euclidean', standardize=True)
 
 ​	A function from query_strategy.py used to query the indexs of images for human annotation during active learning loop.
 
-Arguments:
+Parameters:
 
 ​	strategy (string): name of the query strategy you want to use, Can be chosen from['random', 'uncertain', 'margin', 'entropy', 'k_means', 'k_means++', 'k_center_greedy', 'confident_coreset'].
 
@@ -278,6 +298,12 @@ Arguments:
 
 
 
+Returns: 
+
+​	A tuple`(Float, Numpy Array)`with the number of second to finnish the query in index 0 and a numpy array of integer contained the selected indexs of images for human annotation in index 1.
+
+
+
 ​	
 
 
@@ -288,7 +314,7 @@ Arguments:
 
 function get_model(dataset,model_name,train_configs,model_type = 'Basic',test_ds=None) 
 
-​	A function from ModelConstructor.py used to build appropriate model class based on your need
+​	A function from ModelConstructor.py used to build an appropriate model class based on your need
 
 Parameters:
 
@@ -299,6 +325,12 @@ Parameters:
 ​	model_type(string): name of the algorithm you want to use. Can be chosen from['Basic', 'Loss', 'MeanTeacher', 'TemporalEnsembling', 'NoisyStudent' ]. 'MeanTeacher', 'TemporalEnsembling', 'NoisyStudent' should be chosen for three semi-supervised learning algorithm and 'Basic' should be chosen for all active learning loop except loss learning algorithm which shoud use 'Loss' option
 
 ​	test_ds(dataset): if you choose `MeanTeacher` or `TemporalEnsembling` as model_type, you can pass a test dataset to get accuracy of current model on that after each epoch of the training loop. 
+
+
+
+Returns:
+
+​	An appropriate model class object used for your active learning or semi-supervised learning task
 
 ​	
 
