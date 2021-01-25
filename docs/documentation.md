@@ -1,6 +1,6 @@
 # Documentation
 
-### **MultiTransformDataset**
+### MultiTransformDataset
 
 *class* **MultiTransformDataset**(path_list, target_list=None, classes=None, class_name_map=None, root_dir='', transform=None)
 
