@@ -13,6 +13,7 @@ Got inspiration from the original paper, 'Learning Loss for Active Learning'
 http://arxiv.org/abs/1905.03677
 """
 
+
 class LossPredictBaseModel(BaseModel):
     def __init__(self, dataset, model_name, configs):
         super().__init__(dataset, model_name, configs)

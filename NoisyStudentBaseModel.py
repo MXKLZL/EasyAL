@@ -18,17 +18,13 @@ Paper: https://arxiv.org/abs/1911.04252
 '''
 
 class NoisyStudentBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, teacher_list = None):
+    def __init__(self, dataset, model_name, configs, student_list = None):
         super().__init__(dataset, model_name, configs)
-        self.teacher_list = teacher_list
+        self.student_list = student_list
         self.teacher_target = None
         self.student_epoch = configs['student_epoch']
         self.dropout = 0
 
-        if test_ds:
-            self.testloader = torch.utils.data.DataLoader(
-                test_ds, batch_size=32)
-            self.test_target = test_ds.target_list
 
     def init_data_loaders(self):
         unlabeled_index = self.get_unlabeled_index()
@@ -215,10 +211,10 @@ class NoisyStudentBaseModel(BaseModel):
 
         self.dropout = self.configs['dropout']
         
-        new_model = self.teacher_list[0]
+        new_model = self.student[0]
         self.model_name = new_model
         self.model = self.__get_model(new_model)
-        self.teacher_list = self.teacher_list[1:]
+        self.student_list = self.student_list[1:]
         self.student_epoch = self.student_epoch[1:]
         self.data_loader_unlabeled = torch.utils.data.DataLoader(self.dataset_unlabeled,
                                                                  batch_size=self.configs['labeled_batch_size'])
@@ -229,7 +225,7 @@ class NoisyStudentBaseModel(BaseModel):
         unlabel_count = len(self.teacher_target[0])
         label_count = len(self.labeled_index)
         rounds = math.ceil(label_count / self.configs['labeled_batch_size'])
-        unlabel_batchsize = min(64, int(unlabel_count / rounds))
+        unlabel_batchsize = min(64, max(int(unlabel_count / rounds),1))
 
         unlabeled_index = self.get_unlabeled_index()
 

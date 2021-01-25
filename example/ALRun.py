@@ -16,6 +16,7 @@ from LossPredictBaseModel import *
 import pickle
 from utils import *
 from ModelConstructor import get_model
+from MultiTransformDataset import TransformTwice
 
 '''
 The dataset used in this example is Freiburg Groceries Dataset (http://aisdatasets.informatik.uni-freiburg.de/freiburg_groceries_dataset/)

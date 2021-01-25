@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from LossPredictBaseModel import *
 
 
-def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=False, distance_name='euclidean', standardize=True):
+def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=None, distance_name='euclidean', standardize=True):
     start = time.time()
 
     if strategy == 'loss':
@@ -76,7 +76,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
         assert not isinstance(model_class,LossPredictBaseModel), "Please don't pass a Loss Model"
 
         unlabel_loss = None
-        if add_uncertainty != False:
+        if add_uncertainty is not None:
             unlabel_loss = get_uncertainty(add_uncertainty, model_class)
 
         unlabel_index = model_class.get_unlabeled_index()
@@ -253,7 +253,7 @@ def query(strategy, model_class, label_per_round, alpha=0.5, add_uncertainty=Fal
             unlabel_embedding = scaler.transform(unlabel_embedding)
             label_embedding = scaler.transform(label_embedding)
 
-        if add_uncertainty == False:
+        if add_uncertainty is None:
             unlabel_loss = get_uncertainty('loss', model_class)
         else:
             unlabel_loss = get_uncertainty(add_uncertainty, model_class)
