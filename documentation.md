@@ -319,7 +319,7 @@ If you are using **LossPredictBaseModel** class, you need further specify the fo
 - margin(Float): The margin used in the pair comparison loss(the crafted loss for the loss predicting model)
 - lambda(Float): Weight for the loss predicting model loss in training
 
-If you are using MEBaseModel class, you need further specify the following configurations.
+If you are using **MEBaseModel** class, you need further specify the following configurations.
 
 - query_schedule(list of Integers): If active learning query is combined during training, this item must be provided. Query_schedule is a list of epochs(< configs['epoch']) where the training will pause to wait for new labels input and updating the model
 - alpha(Float): Alpha parameter in the exponential moving average
