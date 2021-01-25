@@ -37,7 +37,6 @@ class MultiTransformDataset(Dataset):
         self.classes = classes
         self.root_dir = root_dir
         self.transform = transform
-        self.classes = classes
         self.class_name_map = class_name_map
         self.mode = 0
 

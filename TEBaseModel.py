@@ -16,12 +16,11 @@ Paper: https://arxiv.org/abs/1610.02242
 '''
 
 class TEBaseModel(BaseModel):
-    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True, test_mode = False):
+    def __init__(self, dataset, model_name, configs, test_ds=None, weight=True):
         super().__init__(dataset, model_name, configs)
         self.data_loader = torch.utils.data.DataLoader(
             dataset, batch_size=configs['batch_size'])
         self.use_weight = weight
-        self.test_mode = test_mode
         self.query_schedule = iter(configs['query_schedule'])
 
         if test_ds:
@@ -81,7 +80,7 @@ class TEBaseModel(BaseModel):
             running_sl = 0.0
             running_ul = 0.0
             running_corrects_lb = 0
-            running_corrects_ulb = 0
+
 
             if self.use_weight:
                 weight = weight_scheduler(
@@ -114,24 +113,19 @@ class TEBaseModel(BaseModel):
                 running_ul += ul.item() * inputs.size(0)
                 running_corrects_lb += torch.sum(
                     preds[labeled_mask_batch] == labels[labeled_mask_batch].data)
-                if self.test_mode:
-                    running_corrects_ulb += torch.sum(
-                        preds[~labeled_mask_batch] == labels[~labeled_mask_batch].data)
+                
 
             self.Z = alpha * self.Z + (1. - alpha) * outputs
             self.z = self.Z * (1. / (1. - alpha ** (epoch + 1)))
 
             epoch_loss = running_loss / self.num_train
             epoch_acc_lb = running_corrects_lb.double() / len(self.labeled_index)
-            if self.test_mode:
-                epoch_acc_ulb = running_corrects_ulb.double(
-                ) / (self.num_train - len(self.labeled_index))
-            else:
-                epoch_acc_ulb = -1
+
+
             epoch_sl = running_sl / self.num_train
             epoch_ul = running_ul / self.num_train
             self.start_epoch += 1
-            print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f} Acc Ulb {epoch_acc_ulb : .4f}')
+            print(f'{epoch} Loss {epoch_loss : .4f} SL {epoch_sl : .4f} UL {epoch_ul: .4f} Acc Lb {epoch_acc_lb: .4f}')
             if self.testloader:
                 test_acc = self.pred_acc(self.testloader, self.test_target)
                 print(f'Test_Acc {test_acc : .4f} ')
