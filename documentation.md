@@ -355,7 +355,7 @@ When you create **MultiTransformDataset()** object, you need pass a list transfo
 
 - transforms (list of transformation): list of callable transform object to be applie on a sample, using its index as the mode for the transformation. By default, 0 is the index of transformation used for training(with augmentation), 1 is the index of transformation used for predicting(without augmentation).
 
--  For the NoisyStudent Algoirthm, we recommend to add transformation of Brightness, Contrast, Sharpness during the training step to help student model outperform their teacher. For more information, refer to [Self-training with Noisy Student improves ImageNet classification](https://arxiv.org/pdf/1911.04252.pdf)
+-  For the NoisyStudent Algorithm, we recommend to add transformation of Brightness, Contrast, Sharpness during the training step to help student model outperform their teacher. For more information, refer to [Self-training with Noisy Student improves ImageNet classification](https://arxiv.org/pdf/1911.04252.pdf)
 
   
 
