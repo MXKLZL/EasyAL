@@ -4,7 +4,7 @@
 </p>
 
 # EasyAL
-A modular active learning package for image classification with state-of-the-art active learning strategies
+A modular active learning package for image classification with state-of-the-art active learning strategies. Please visit https://mxklzl.github.io/EasyAL for detailed documentation.
 
 # Requirements
  - Dependency file [pyproject.toml](./pyproject.toml)
