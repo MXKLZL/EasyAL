@@ -5,7 +5,7 @@
 A modular active learning package for image classification with state-of-the-art active learning strategies
 
 #### Requirements
- - Dependency file [pyproject.toml](../pyproject.toml)
+ - Dependency file [pyproject.toml](https://github.com/MXKLZL/EasyAL/blob/main/pyproject.toml)
 
 #### Installation
 - Install label studio with command `$pip install label-studio`
@@ -16,7 +16,7 @@ A modular active learning package for image classification with state-of-the-art
 Guide to create label studio work folder and start active learning loop:
 
 
-- Manually create a configuration file, see example in [example/config.xml](../example/config.xml)
+- Manually create a configuration file, see example in [example/config.xml](https://github.com/MXKLZL/EasyAL/blob/main/example/config.xml)
 
 - Have a folder with images for annotation
 
@@ -24,7 +24,7 @@ Guide to create label studio work folder and start active learning loop:
 
 - A folder with the following structure will appear in your current path 
 
-   ![img](../example/label_studio_work_folder.png)
+   ![img](label_studio_work_folder.png)
 
 - Run `label-studio start ./[your label studio project name]` and your browser with launch automatically with the label studio interface
 
@@ -32,9 +32,9 @@ Guide to create label studio work folder and start active learning loop:
 
 - After your first round of labeling, change environment variable  "sampling": "sequential" in `./[your label studio project name]/.config.json` to "sampling": "prediction-score-max" to activate active learning mode for future rounds
 
-- Use EasyAL package to train your image classification model and query images to label with active learning strategies. See example in [example/ALRun.py](../example/ALRun.py)
+- Use EasyAL package to train your image classification model and query images to label with active learning strategies. See example in [example/ALRun.py](https://github.com/MXKLZL/EasyAL/blob/main/example/ALRun.py)
 
-- Using the functions in utils.py to parse JSON files in [your label studio project name]/completions folder and update the labels of images in your self-create dataset. See example in [example/ALRun.py](../example/ALRun.py)
+- Using the functions in utils.py to parse JSON files in [your label studio project name]/completions folder and update the labels of images in your self-create dataset. See example in [example/ALRun.py](https://github.com/MXKLZL/EasyAL/blob/main/example/ALRun.py)
 
 - Visit https://labelstud.io/ for any question related to label studio
 
