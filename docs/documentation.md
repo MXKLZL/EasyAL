@@ -296,17 +296,13 @@ Parameters:
 
 ​	standardize(boolean): If every dimension of image's embedding should be normalized before the distance calculation. Set it equal to true to aviod the scale mismatch between the dimensions of embedding space.
 
-
-
 Returns: 
 
 ​	A tuple`(Float, Numpy Array)`with the number of second to finnish the query in index 0 and a numpy array of integer contained the selected indexs of images for human annotation in index 1.
 
 
 
-​	
-
-### Others
+### ModelConstructor
 
 function get_model(dataset,model_name,train_configs,model_type = 'Basic',test_ds=None) 
 
@@ -327,4 +323,61 @@ Parameters:
 Returns:
 
 ​	An appropriate model class object used for your active learning or semi-supervised learning task
+
+
+
+### Utils
+
+function get_mapping(ds)
+
+​	Get the two-way mappings between index and name of the training data stored
+
+Parameters:
+
+​	ds (MultiTransformDataset object): The dataset to obtain the mappings
+
+Returns:
+
+​	index to base name mapping (list) and base name to index mapping (dict)
+
+​	
+
+function read_from_oracle(completion_path, idx2base, base2idx)
+
+​	Read the label from the output file of label studio, return the index and labeled class as two lists
+
+Parameters:
+
+​	completion_path (str): The path of the JSON output from label studio	
+
+​	idx2base (list) - The index to base name mapping
+
+​	base2idx (dict) - The base name to index mapping
+
+Returns:
+
+​	index and labeled class as two lists
+
+
+
+function update_json(task_json_path, query_indices, idx2base, base2idx, model, ds, class_name_map)
+
+​	Update the task JSON of label studo so the images queried by active learning algorithms can be labeled
+with label studio
+
+Parameters: 
+
+​	task_json_path (str): The path of task JSON path of label studio
+
+​    query_indeices (list):  The indices of training data queried by active learning algorithm
+
+​	idx2base (list): The index to base name mapping
+
+​	base2idx (dict): The base name to index mapping
+
+​	model (Model object):  The current Model
+
+​	ds (MultiTransformDataset object): The dataset to obtain the mappings
+
+​	class_name_map (dict): mapping between targets and classes
 
