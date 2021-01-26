@@ -22,6 +22,8 @@ Arguments:
 
 
 
+
+
 function set_mode(mode)
 
 ​	Set the current mode for the transformation. The mode is used as the index for the list of transformations.
@@ -29,6 +31,8 @@ function set_mode(mode)
 ​	Parameters:
 
 ​		mode(integer): index for the list of transformation
+
+
 
 
 
@@ -41,6 +45,8 @@ Parameters:
 ​	index(List of Integers): index of samples to update targets
 
 ​	new_target(List of Integers):	labels of newly annotated samples
+
+
 
 
 
@@ -62,6 +68,10 @@ Returns
 
 
 
+
+
+
+
 ### BaseModel 
 
 *class* **BaseModel**(dataset, model_name, configs)
@@ -73,6 +83,8 @@ Arguments:
 ​	model_name(string): name of the image classifier you want to use. Can be chosen from ['resnet18', 'resnet34', 'resnet50', 'mobilenet']
 
 ​	configs(dictionary): configuration for the current active learning task. See configruation guide for details.
+
+
 
 
 
@@ -88,15 +100,21 @@ Returns:
 
 
 
+
+
 function update()
 
 ​	After labeling more samples, update the model to be prepared for the training of next active learning iteration
 
 
 
+
+
 function fit()
 
 ​	Fit classifier based on input data
+
+
 
 
 
@@ -114,6 +132,8 @@ Returns:
 
 
 
+
+
 function predict_unlabeled()
 
 ​	predict labels (in probabilities) for current unlabeled images
@@ -121,6 +141,8 @@ function predict_unlabeled()
 Returns:
 
 ​	A tensor of probabilities of predicted classes for each image
+
+
 
 
 
@@ -138,6 +160,8 @@ Returns:
 
 
 
+
+
 function get_embedding_unlabeled()
 
 ​	get embeddings for each unlabeled loader based on current model.
@@ -145,6 +169,10 @@ function get_embedding_unlabeled()
 Returns:
 
 ​	A tensor of embeddings for each image
+
+
+
+
 
 
 
@@ -162,6 +190,8 @@ Arguments:
 
 
 
+
+
 function predict_loss(data_loader)
 
 ​	get predicted classification loss for each image of a given data loader
@@ -172,6 +202,8 @@ Returns:
 
 
 
+
+
 function  predict_unlabeled_loss()
 
 ​	get predicted classification loss for each unlabeled image
@@ -179,6 +211,8 @@ function  predict_unlabeled_loss()
 Returns:
 
 ​	A tensor of predicted loss
+
+
 
 
 
@@ -200,6 +234,8 @@ Arguments:
 
 
 
+
+
 function pred_acc(testloader, test_target, criterion='f1')
 
 ​	Calculate test accuracy on given test set
@@ -215,6 +251,10 @@ Parameters:
 Returns:
 
 ​	Evaluation metric calculated on predictions from given test set
+
+
+
+
 
 
 
@@ -238,6 +278,8 @@ Arguments:
 
 
 
+
+
 function pred_acc(testloader, test_target, criterion='f1')
 
 ​	Calculate test accuracy on given test set
@@ -256,6 +298,8 @@ Returns:
 
 
 
+
+
 ### NoisyStudentBaseModel
 
 *class* **NoisyStudentBaseModel**(dataset, model_name, configs, student_list = None)
@@ -269,6 +313,8 @@ Arguments:
 ​	configs(dictionary): configuration for the Semi-Supervised Learning task. See configruation guide for details.
 
 ​	student_list(list of string): List of student model's name for the noisy student training loop.
+
+
 
 
 
@@ -302,6 +348,10 @@ Returns:
 
 
 
+
+
+
+
 ### ModelConstructor
 
 function get_model(dataset,model_name,train_configs,model_type = 'Basic',test_ds=None) 
@@ -326,6 +376,10 @@ Returns:
 
 
 
+
+
+
+
 ### Utils
 
 function get_mapping(ds)
@@ -342,6 +396,8 @@ Returns:
 
 ​	
 
+
+
 function read_from_oracle(completion_path, idx2base, base2idx)
 
 ​	Read the label from the output file of label studio, return the index and labeled class as two lists
@@ -357,6 +413,8 @@ Parameters:
 Returns:
 
 ​	index and labeled class as two lists
+
+
 
 
 
